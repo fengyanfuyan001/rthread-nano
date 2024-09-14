@@ -1,0 +1,1260 @@
+ARM GAS  /tmp/ccrWi8RQ.s 			page 1
+
+
+   1              		.cpu cortex-m3
+   2              		.arch armv7-m
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"board.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.section	.text._SysTick_Config,"ax",%progbits
+  18              		.align	1
+  19              		.syntax unified
+  20              		.thumb
+  21              		.thumb_func
+  23              	_SysTick_Config:
+  24              	.LVL0:
+  25              	.LFB85:
+  26              		.file 1 "rt_thread/bsp/src/board.c"
+   1:rt_thread/bsp/src/board.c **** /*
+   2:rt_thread/bsp/src/board.c ****  * Copyright (c) 2006-2019, RT-Thread Development Team
+   3:rt_thread/bsp/src/board.c ****  *
+   4:rt_thread/bsp/src/board.c ****  * SPDX-License-Identifier: Apache-2.0
+   5:rt_thread/bsp/src/board.c ****  *
+   6:rt_thread/bsp/src/board.c ****  * Change Logs:
+   7:rt_thread/bsp/src/board.c ****  * Date           Author       Notes
+   8:rt_thread/bsp/src/board.c ****  * 2017-07-24     Tanek        the first version
+   9:rt_thread/bsp/src/board.c ****  * 2018-11-12     Ernest Chen  modify copyright
+  10:rt_thread/bsp/src/board.c ****  */
+  11:rt_thread/bsp/src/board.c ****  
+  12:rt_thread/bsp/src/board.c **** #include <stdint.h>
+  13:rt_thread/bsp/src/board.c **** #include <rthw.h>
+  14:rt_thread/bsp/src/board.c **** #include <rtthread.h>
+  15:rt_thread/bsp/src/board.c **** #include "main.h"
+  16:rt_thread/bsp/src/board.c **** 
+  17:rt_thread/bsp/src/board.c **** 
+  18:rt_thread/bsp/src/board.c **** #define _SCB_BASE       (0xE000E010UL)
+  19:rt_thread/bsp/src/board.c **** #define _SYSTICK_CTRL   (*(rt_uint32_t *)(_SCB_BASE + 0x0))
+  20:rt_thread/bsp/src/board.c **** #define _SYSTICK_LOAD   (*(rt_uint32_t *)(_SCB_BASE + 0x4))
+  21:rt_thread/bsp/src/board.c **** #define _SYSTICK_VAL    (*(rt_uint32_t *)(_SCB_BASE + 0x8))
+  22:rt_thread/bsp/src/board.c **** #define _SYSTICK_CALIB  (*(rt_uint32_t *)(_SCB_BASE + 0xC))
+  23:rt_thread/bsp/src/board.c **** #define _SYSTICK_PRI    (*(rt_uint8_t  *)(0xE000ED23UL))
+  24:rt_thread/bsp/src/board.c **** 
+  25:rt_thread/bsp/src/board.c **** #ifdef RT_USING_CONSOLE
+  26:rt_thread/bsp/src/board.c **** 
+  27:rt_thread/bsp/src/board.c **** static UART_HandleTypeDef huart1;
+  28:rt_thread/bsp/src/board.c **** 
+  29:rt_thread/bsp/src/board.c **** static int uart_setup(void)
+  30:rt_thread/bsp/src/board.c **** {
+  31:rt_thread/bsp/src/board.c **** 
+  32:rt_thread/bsp/src/board.c ****     huart1.Instance = USART1;
+ARM GAS  /tmp/ccrWi8RQ.s 			page 2
+
+
+  33:rt_thread/bsp/src/board.c ****     huart1.Init.BaudRate   = 115200;
+  34:rt_thread/bsp/src/board.c ****     huart1.Init.HwFlowCtl  = UART_HWCONTROL_NONE;
+  35:rt_thread/bsp/src/board.c ****     huart1.Init.Mode       = UART_MODE_TX_RX;
+  36:rt_thread/bsp/src/board.c ****     huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  37:rt_thread/bsp/src/board.c ****     huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  38:rt_thread/bsp/src/board.c ****     huart1.Init.StopBits   = UART_STOPBITS_1;
+  39:rt_thread/bsp/src/board.c ****     huart1.Init.Parity     = UART_PARITY_NONE;
+  40:rt_thread/bsp/src/board.c **** 
+  41:rt_thread/bsp/src/board.c ****     if (HAL_UART_Init(&huart1) != HAL_OK)
+  42:rt_thread/bsp/src/board.c ****     {
+  43:rt_thread/bsp/src/board.c ****         while(1);
+  44:rt_thread/bsp/src/board.c ****     }
+  45:rt_thread/bsp/src/board.c **** 
+  46:rt_thread/bsp/src/board.c ****     return 0;
+  47:rt_thread/bsp/src/board.c **** }
+  48:rt_thread/bsp/src/board.c **** 
+  49:rt_thread/bsp/src/board.c **** INIT_BOARD_EXPORT(uart_setup);
+  50:rt_thread/bsp/src/board.c **** 
+  51:rt_thread/bsp/src/board.c **** void rt_hw_console_output(const char *str)
+  52:rt_thread/bsp/src/board.c **** {
+  53:rt_thread/bsp/src/board.c ****     rt_size_t i = 0, size = 0;
+  54:rt_thread/bsp/src/board.c ****     char a = '\r';
+  55:rt_thread/bsp/src/board.c **** 
+  56:rt_thread/bsp/src/board.c ****     __HAL_UNLOCK(&huart1);
+  57:rt_thread/bsp/src/board.c **** 
+  58:rt_thread/bsp/src/board.c ****     size = rt_strlen(str);
+  59:rt_thread/bsp/src/board.c **** 
+  60:rt_thread/bsp/src/board.c ****     for (i = 0; i < size; i++)
+  61:rt_thread/bsp/src/board.c ****     {
+  62:rt_thread/bsp/src/board.c ****         if (*(str + i) == '\n')
+  63:rt_thread/bsp/src/board.c ****         {
+  64:rt_thread/bsp/src/board.c ****             HAL_UART_Transmit(&huart1, (uint8_t *)&a, 1, 1);
+  65:rt_thread/bsp/src/board.c ****         }
+  66:rt_thread/bsp/src/board.c ****         HAL_UART_Transmit(&huart1, (uint8_t *)(str + i), 1, 1);
+  67:rt_thread/bsp/src/board.c ****     }
+  68:rt_thread/bsp/src/board.c **** }
+  69:rt_thread/bsp/src/board.c **** #endif
+  70:rt_thread/bsp/src/board.c **** 
+  71:rt_thread/bsp/src/board.c **** static void gpio_setup(void)
+  72:rt_thread/bsp/src/board.c **** {
+  73:rt_thread/bsp/src/board.c ****   GPIO_InitTypeDef GPIO_InitStruct = {0};
+  74:rt_thread/bsp/src/board.c **** 
+  75:rt_thread/bsp/src/board.c ****   __HAL_RCC_GPIOC_CLK_ENABLE();
+  76:rt_thread/bsp/src/board.c ****   __HAL_RCC_GPIOD_CLK_ENABLE();
+  77:rt_thread/bsp/src/board.c ****   __HAL_RCC_GPIOA_CLK_ENABLE();
+  78:rt_thread/bsp/src/board.c **** 
+  79:rt_thread/bsp/src/board.c ****   /*Configure GPIO pin Output Level */
+  80:rt_thread/bsp/src/board.c ****   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
+  81:rt_thread/bsp/src/board.c **** 
+  82:rt_thread/bsp/src/board.c ****   /*Configure GPIO pin : PC13 */
+  83:rt_thread/bsp/src/board.c ****   GPIO_InitStruct.Pin = GPIO_PIN_13;
+  84:rt_thread/bsp/src/board.c ****   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+  85:rt_thread/bsp/src/board.c ****   GPIO_InitStruct.Pull = GPIO_NOPULL;
+  86:rt_thread/bsp/src/board.c ****   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  87:rt_thread/bsp/src/board.c ****   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+  88:rt_thread/bsp/src/board.c **** 
+  89:rt_thread/bsp/src/board.c **** }
+ARM GAS  /tmp/ccrWi8RQ.s 			page 3
+
+
+  90:rt_thread/bsp/src/board.c **** 
+  91:rt_thread/bsp/src/board.c **** I2C_HandleTypeDef hi2c1;
+  92:rt_thread/bsp/src/board.c **** 
+  93:rt_thread/bsp/src/board.c **** static uint32_t i2c_setup(void) {
+  94:rt_thread/bsp/src/board.c **** 
+  95:rt_thread/bsp/src/board.c ****     __HAL_RCC_I2C1_CLK_ENABLE();   
+  96:rt_thread/bsp/src/board.c ****     __HAL_RCC_GPIOB_CLK_ENABLE();  
+  97:rt_thread/bsp/src/board.c **** 
+  98:rt_thread/bsp/src/board.c ****     GPIO_InitTypeDef GPIO_InitStruct = {0};
+  99:rt_thread/bsp/src/board.c **** 
+ 100:rt_thread/bsp/src/board.c ****     // SCL PB6  SDA PB7
+ 101:rt_thread/bsp/src/board.c ****     GPIO_InitStruct.Pin = GPIO_PIN_6 | GPIO_PIN_7;
+ 102:rt_thread/bsp/src/board.c ****     GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;    
+ 103:rt_thread/bsp/src/board.c ****     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+ 104:rt_thread/bsp/src/board.c ****     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+ 105:rt_thread/bsp/src/board.c ****    
+ 106:rt_thread/bsp/src/board.c ****     hi2c1.Instance = I2C1;
+ 107:rt_thread/bsp/src/board.c ****     hi2c1.Init.ClockSpeed = 400000;            
+ 108:rt_thread/bsp/src/board.c ****     hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;    
+ 109:rt_thread/bsp/src/board.c ****     hi2c1.Init.OwnAddress1 = 0;                
+ 110:rt_thread/bsp/src/board.c ****     hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;  
+ 111:rt_thread/bsp/src/board.c ****     hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+ 112:rt_thread/bsp/src/board.c ****     hi2c1.Init.OwnAddress2 = 0;
+ 113:rt_thread/bsp/src/board.c ****     hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+ 114:rt_thread/bsp/src/board.c ****     hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;     
+ 115:rt_thread/bsp/src/board.c **** 
+ 116:rt_thread/bsp/src/board.c ****     if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+ 117:rt_thread/bsp/src/board.c ****     {
+ 118:rt_thread/bsp/src/board.c ****         while(1);
+ 119:rt_thread/bsp/src/board.c ****     }
+ 120:rt_thread/bsp/src/board.c ****     return 0;
+ 121:rt_thread/bsp/src/board.c **** }
+ 122:rt_thread/bsp/src/board.c **** 
+ 123:rt_thread/bsp/src/board.c **** void screen_setup(void)
+ 124:rt_thread/bsp/src/board.c **** {
+ 125:rt_thread/bsp/src/board.c ****     uint8_t screen_init_command[] = {
+ 126:rt_thread/bsp/src/board.c ****         0x00, // Command Stream
+ 127:rt_thread/bsp/src/board.c ****         0xa8, 0x3f, // Set MUX Ratio
+ 128:rt_thread/bsp/src/board.c ****         0xd3, 0x00, // Set Display Offset
+ 129:rt_thread/bsp/src/board.c ****         0x40, // Set Display Start Line
+ 130:rt_thread/bsp/src/board.c ****         0xa0, // Set Segment re-map
+ 131:rt_thread/bsp/src/board.c ****         0xc0, // Set COM Output Scan Direction
+ 132:rt_thread/bsp/src/board.c ****         0xda, 0x02, // Set COM Pins hardware configuration
+ 133:rt_thread/bsp/src/board.c ****         0x81, 0x7f, // Set Contrast Control
+ 134:rt_thread/bsp/src/board.c ****         0xa5, // Enable Entire Display On
+ 135:rt_thread/bsp/src/board.c ****         0xa6, // Set Normal Display
+ 136:rt_thread/bsp/src/board.c ****         0xd5, 0x80, // Set OSC Frequency
+ 137:rt_thread/bsp/src/board.c ****         0x8d, 0x14, // Enable charge pump regulator
+ 138:rt_thread/bsp/src/board.c ****         0xaf, // Display on
+ 139:rt_thread/bsp/src/board.c ****     };
+ 140:rt_thread/bsp/src/board.c ****     uint16_t DevAddress = 0x78;      
+ 141:rt_thread/bsp/src/board.c **** 
+ 142:rt_thread/bsp/src/board.c ****     if (HAL_I2C_Master_Transmit(&hi2c1, DevAddress << 1, screen_init_command, sizeof(screen_init_co
+ 143:rt_thread/bsp/src/board.c ****     {
+ 144:rt_thread/bsp/src/board.c ****       rt_kprintf("data transmit success!\n");
+ 145:rt_thread/bsp/src/board.c ****     }
+ 146:rt_thread/bsp/src/board.c ****     else
+ARM GAS  /tmp/ccrWi8RQ.s 			page 4
+
+
+ 147:rt_thread/bsp/src/board.c ****     {
+ 148:rt_thread/bsp/src/board.c ****       rt_kprintf("data transmit error!\n");
+ 149:rt_thread/bsp/src/board.c ****     }
+ 150:rt_thread/bsp/src/board.c **** }
+ 151:rt_thread/bsp/src/board.c **** // Updates the variable SystemCoreClock and must be called 
+ 152:rt_thread/bsp/src/board.c **** // whenever the core clock is changed during program execution.
+ 153:rt_thread/bsp/src/board.c **** extern void SystemCoreClockUpdate(void);
+ 154:rt_thread/bsp/src/board.c **** // Holds the system core clock, which is the system clock 
+ 155:rt_thread/bsp/src/board.c **** // frequency supplied to the SysTick timer and the processor 
+ 156:rt_thread/bsp/src/board.c **** // core clock.
+ 157:rt_thread/bsp/src/board.c **** extern uint32_t SystemCoreClock;
+ 158:rt_thread/bsp/src/board.c **** 
+ 159:rt_thread/bsp/src/board.c **** static uint32_t _SysTick_Config(rt_uint32_t ticks)
+ 160:rt_thread/bsp/src/board.c **** {
+  27              		.loc 1 160 1 view -0
+  28              		.cfi_startproc
+  29              		@ args = 0, pretend = 0, frame = 0
+  30              		@ frame_needed = 0, uses_anonymous_args = 0
+  31              		@ link register save eliminated.
+ 161:rt_thread/bsp/src/board.c ****     if ((ticks - 1) > 0xFFFFFF)
+  32              		.loc 1 161 5 view .LVU1
+  33              		.loc 1 161 16 is_stmt 0 view .LVU2
+  34 0000 0138     		subs	r0, r0, #1
+  35              	.LVL1:
+  36              		.loc 1 161 8 view .LVU3
+  37 0002 B0F1807F 		cmp	r0, #16777216
+  38 0006 0BD2     		bcs	.L3
+ 162:rt_thread/bsp/src/board.c ****     {
+ 163:rt_thread/bsp/src/board.c ****         return 1;
+ 164:rt_thread/bsp/src/board.c ****     }
+ 165:rt_thread/bsp/src/board.c ****     
+ 166:rt_thread/bsp/src/board.c ****     _SYSTICK_LOAD = ticks - 1; 
+  39              		.loc 1 166 5 is_stmt 1 view .LVU4
+  40              		.loc 1 166 19 is_stmt 0 view .LVU5
+  41 0008 4FF0E023 		mov	r3, #-536813568
+  42 000c 5861     		str	r0, [r3, #20]
+ 167:rt_thread/bsp/src/board.c ****     _SYSTICK_PRI = 0xFF;
+  43              		.loc 1 167 5 is_stmt 1 view .LVU6
+  44              		.loc 1 167 18 is_stmt 0 view .LVU7
+  45 000e 054A     		ldr	r2, .L4
+  46 0010 FF21     		movs	r1, #255
+  47 0012 82F82310 		strb	r1, [r2, #35]
+ 168:rt_thread/bsp/src/board.c ****     _SYSTICK_VAL  = 0;
+  48              		.loc 1 168 5 is_stmt 1 view .LVU8
+  49              		.loc 1 168 19 is_stmt 0 view .LVU9
+  50 0016 0020     		movs	r0, #0
+  51              	.LVL2:
+  52              		.loc 1 168 19 view .LVU10
+  53 0018 9861     		str	r0, [r3, #24]
+ 169:rt_thread/bsp/src/board.c ****     _SYSTICK_CTRL = 0x07;  
+  54              		.loc 1 169 5 is_stmt 1 view .LVU11
+  55              		.loc 1 169 19 is_stmt 0 view .LVU12
+  56 001a 0722     		movs	r2, #7
+  57 001c 1A61     		str	r2, [r3, #16]
+ 170:rt_thread/bsp/src/board.c ****     
+ 171:rt_thread/bsp/src/board.c ****     return 0;
+  58              		.loc 1 171 5 is_stmt 1 view .LVU13
+ARM GAS  /tmp/ccrWi8RQ.s 			page 5
+
+
+  59              		.loc 1 171 12 is_stmt 0 view .LVU14
+  60 001e 7047     		bx	lr
+  61              	.LVL3:
+  62              	.L3:
+ 163:rt_thread/bsp/src/board.c ****     }
+  63              		.loc 1 163 16 view .LVU15
+  64 0020 0120     		movs	r0, #1
+  65              	.LVL4:
+ 172:rt_thread/bsp/src/board.c **** }
+  66              		.loc 1 172 1 view .LVU16
+  67 0022 7047     		bx	lr
+  68              	.L5:
+  69              		.align	2
+  70              	.L4:
+  71 0024 00ED00E0 		.word	-536810240
+  72              		.cfi_endproc
+  73              	.LFE85:
+  75              		.section	.text.uart_setup,"ax",%progbits
+  76              		.align	1
+  77              		.syntax unified
+  78              		.thumb
+  79              		.thumb_func
+  81              	uart_setup:
+  82              	.LFB80:
+  30:rt_thread/bsp/src/board.c **** 
+  83              		.loc 1 30 1 is_stmt 1 view -0
+  84              		.cfi_startproc
+  85              		@ args = 0, pretend = 0, frame = 0
+  86              		@ frame_needed = 0, uses_anonymous_args = 0
+  87 0000 08B5     		push	{r3, lr}
+  88              	.LCFI0:
+  89              		.cfi_def_cfa_offset 8
+  90              		.cfi_offset 3, -8
+  91              		.cfi_offset 14, -4
+  32:rt_thread/bsp/src/board.c ****     huart1.Init.BaudRate   = 115200;
+  92              		.loc 1 32 5 view .LVU18
+  32:rt_thread/bsp/src/board.c ****     huart1.Init.BaudRate   = 115200;
+  93              		.loc 1 32 21 is_stmt 0 view .LVU19
+  94 0002 0A48     		ldr	r0, .L10
+  95 0004 0A4B     		ldr	r3, .L10+4
+  96 0006 0360     		str	r3, [r0]
+  33:rt_thread/bsp/src/board.c ****     huart1.Init.HwFlowCtl  = UART_HWCONTROL_NONE;
+  97              		.loc 1 33 5 is_stmt 1 view .LVU20
+  33:rt_thread/bsp/src/board.c ****     huart1.Init.HwFlowCtl  = UART_HWCONTROL_NONE;
+  98              		.loc 1 33 28 is_stmt 0 view .LVU21
+  99 0008 4FF4E133 		mov	r3, #115200
+ 100 000c 4360     		str	r3, [r0, #4]
+  34:rt_thread/bsp/src/board.c ****     huart1.Init.Mode       = UART_MODE_TX_RX;
+ 101              		.loc 1 34 5 is_stmt 1 view .LVU22
+  34:rt_thread/bsp/src/board.c ****     huart1.Init.Mode       = UART_MODE_TX_RX;
+ 102              		.loc 1 34 28 is_stmt 0 view .LVU23
+ 103 000e 0023     		movs	r3, #0
+ 104 0010 8361     		str	r3, [r0, #24]
+  35:rt_thread/bsp/src/board.c ****     huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+ 105              		.loc 1 35 5 is_stmt 1 view .LVU24
+  35:rt_thread/bsp/src/board.c ****     huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+ 106              		.loc 1 35 28 is_stmt 0 view .LVU25
+ARM GAS  /tmp/ccrWi8RQ.s 			page 6
+
+
+ 107 0012 0C22     		movs	r2, #12
+ 108 0014 4261     		str	r2, [r0, #20]
+  36:rt_thread/bsp/src/board.c ****     huart1.Init.WordLength = UART_WORDLENGTH_8B;
+ 109              		.loc 1 36 5 is_stmt 1 view .LVU26
+  36:rt_thread/bsp/src/board.c ****     huart1.Init.WordLength = UART_WORDLENGTH_8B;
+ 110              		.loc 1 36 30 is_stmt 0 view .LVU27
+ 111 0016 C361     		str	r3, [r0, #28]
+  37:rt_thread/bsp/src/board.c ****     huart1.Init.StopBits   = UART_STOPBITS_1;
+ 112              		.loc 1 37 5 is_stmt 1 view .LVU28
+  37:rt_thread/bsp/src/board.c ****     huart1.Init.StopBits   = UART_STOPBITS_1;
+ 113              		.loc 1 37 28 is_stmt 0 view .LVU29
+ 114 0018 8360     		str	r3, [r0, #8]
+  38:rt_thread/bsp/src/board.c ****     huart1.Init.Parity     = UART_PARITY_NONE;
+ 115              		.loc 1 38 5 is_stmt 1 view .LVU30
+  38:rt_thread/bsp/src/board.c ****     huart1.Init.Parity     = UART_PARITY_NONE;
+ 116              		.loc 1 38 28 is_stmt 0 view .LVU31
+ 117 001a C360     		str	r3, [r0, #12]
+  39:rt_thread/bsp/src/board.c **** 
+ 118              		.loc 1 39 5 is_stmt 1 view .LVU32
+  39:rt_thread/bsp/src/board.c **** 
+ 119              		.loc 1 39 28 is_stmt 0 view .LVU33
+ 120 001c 0361     		str	r3, [r0, #16]
+  41:rt_thread/bsp/src/board.c ****     {
+ 121              		.loc 1 41 5 is_stmt 1 view .LVU34
+  41:rt_thread/bsp/src/board.c ****     {
+ 122              		.loc 1 41 9 is_stmt 0 view .LVU35
+ 123 001e FFF7FEFF 		bl	HAL_UART_Init
+ 124              	.LVL5:
+  41:rt_thread/bsp/src/board.c ****     {
+ 125              		.loc 1 41 8 view .LVU36
+ 126 0022 00B1     		cbz	r0, .L7
+ 127              	.L8:
+  43:rt_thread/bsp/src/board.c ****     }
+ 128              		.loc 1 43 9 is_stmt 1 discriminator 1 view .LVU37
+  43:rt_thread/bsp/src/board.c ****     }
+ 129              		.loc 1 43 17 discriminator 1 view .LVU38
+  43:rt_thread/bsp/src/board.c ****     }
+ 130              		.loc 1 43 14 discriminator 1 view .LVU39
+ 131 0024 FEE7     		b	.L8
+ 132              	.L7:
+  46:rt_thread/bsp/src/board.c **** }
+ 133              		.loc 1 46 5 view .LVU40
+  47:rt_thread/bsp/src/board.c **** 
+ 134              		.loc 1 47 1 is_stmt 0 view .LVU41
+ 135 0026 0020     		movs	r0, #0
+ 136 0028 08BD     		pop	{r3, pc}
+ 137              	.L11:
+ 138 002a 00BF     		.align	2
+ 139              	.L10:
+ 140 002c 00000000 		.word	.LANCHOR0
+ 141 0030 00380140 		.word	1073821696
+ 142              		.cfi_endproc
+ 143              	.LFE80:
+ 145              		.section	.text.gpio_setup,"ax",%progbits
+ 146              		.align	1
+ 147              		.syntax unified
+ 148              		.thumb
+ARM GAS  /tmp/ccrWi8RQ.s 			page 7
+
+
+ 149              		.thumb_func
+ 151              	gpio_setup:
+ 152              	.LFB82:
+  72:rt_thread/bsp/src/board.c ****   GPIO_InitTypeDef GPIO_InitStruct = {0};
+ 153              		.loc 1 72 1 is_stmt 1 view -0
+ 154              		.cfi_startproc
+ 155              		@ args = 0, pretend = 0, frame = 32
+ 156              		@ frame_needed = 0, uses_anonymous_args = 0
+ 157 0000 30B5     		push	{r4, r5, lr}
+ 158              	.LCFI1:
+ 159              		.cfi_def_cfa_offset 12
+ 160              		.cfi_offset 4, -12
+ 161              		.cfi_offset 5, -8
+ 162              		.cfi_offset 14, -4
+ 163 0002 89B0     		sub	sp, sp, #36
+ 164              	.LCFI2:
+ 165              		.cfi_def_cfa_offset 48
+  73:rt_thread/bsp/src/board.c **** 
+ 166              		.loc 1 73 3 view .LVU43
+  73:rt_thread/bsp/src/board.c **** 
+ 167              		.loc 1 73 20 is_stmt 0 view .LVU44
+ 168 0004 0024     		movs	r4, #0
+ 169 0006 0494     		str	r4, [sp, #16]
+ 170 0008 0594     		str	r4, [sp, #20]
+ 171 000a 0694     		str	r4, [sp, #24]
+ 172 000c 0794     		str	r4, [sp, #28]
+  75:rt_thread/bsp/src/board.c ****   __HAL_RCC_GPIOD_CLK_ENABLE();
+ 173              		.loc 1 75 3 is_stmt 1 view .LVU45
+ 174              	.LBB2:
+  75:rt_thread/bsp/src/board.c ****   __HAL_RCC_GPIOD_CLK_ENABLE();
+ 175              		.loc 1 75 3 view .LVU46
+  75:rt_thread/bsp/src/board.c ****   __HAL_RCC_GPIOD_CLK_ENABLE();
+ 176              		.loc 1 75 3 view .LVU47
+ 177 000e 184B     		ldr	r3, .L14
+ 178 0010 9A69     		ldr	r2, [r3, #24]
+ 179 0012 42F01002 		orr	r2, r2, #16
+ 180 0016 9A61     		str	r2, [r3, #24]
+  75:rt_thread/bsp/src/board.c ****   __HAL_RCC_GPIOD_CLK_ENABLE();
+ 181              		.loc 1 75 3 view .LVU48
+ 182 0018 9A69     		ldr	r2, [r3, #24]
+ 183 001a 02F01002 		and	r2, r2, #16
+ 184 001e 0192     		str	r2, [sp, #4]
+  75:rt_thread/bsp/src/board.c ****   __HAL_RCC_GPIOD_CLK_ENABLE();
+ 185              		.loc 1 75 3 view .LVU49
+ 186 0020 019A     		ldr	r2, [sp, #4]
+ 187              	.LBE2:
+  75:rt_thread/bsp/src/board.c ****   __HAL_RCC_GPIOD_CLK_ENABLE();
+ 188              		.loc 1 75 3 view .LVU50
+  76:rt_thread/bsp/src/board.c ****   __HAL_RCC_GPIOA_CLK_ENABLE();
+ 189              		.loc 1 76 3 view .LVU51
+ 190              	.LBB3:
+  76:rt_thread/bsp/src/board.c ****   __HAL_RCC_GPIOA_CLK_ENABLE();
+ 191              		.loc 1 76 3 view .LVU52
+  76:rt_thread/bsp/src/board.c ****   __HAL_RCC_GPIOA_CLK_ENABLE();
+ 192              		.loc 1 76 3 view .LVU53
+ 193 0022 9A69     		ldr	r2, [r3, #24]
+ 194 0024 42F02002 		orr	r2, r2, #32
+ARM GAS  /tmp/ccrWi8RQ.s 			page 8
+
+
+ 195 0028 9A61     		str	r2, [r3, #24]
+  76:rt_thread/bsp/src/board.c ****   __HAL_RCC_GPIOA_CLK_ENABLE();
+ 196              		.loc 1 76 3 view .LVU54
+ 197 002a 9A69     		ldr	r2, [r3, #24]
+ 198 002c 02F02002 		and	r2, r2, #32
+ 199 0030 0292     		str	r2, [sp, #8]
+  76:rt_thread/bsp/src/board.c ****   __HAL_RCC_GPIOA_CLK_ENABLE();
+ 200              		.loc 1 76 3 view .LVU55
+ 201 0032 029A     		ldr	r2, [sp, #8]
+ 202              	.LBE3:
+  76:rt_thread/bsp/src/board.c ****   __HAL_RCC_GPIOA_CLK_ENABLE();
+ 203              		.loc 1 76 3 view .LVU56
+  77:rt_thread/bsp/src/board.c **** 
+ 204              		.loc 1 77 3 view .LVU57
+ 205              	.LBB4:
+  77:rt_thread/bsp/src/board.c **** 
+ 206              		.loc 1 77 3 view .LVU58
+  77:rt_thread/bsp/src/board.c **** 
+ 207              		.loc 1 77 3 view .LVU59
+ 208 0034 9A69     		ldr	r2, [r3, #24]
+ 209 0036 42F00402 		orr	r2, r2, #4
+ 210 003a 9A61     		str	r2, [r3, #24]
+  77:rt_thread/bsp/src/board.c **** 
+ 211              		.loc 1 77 3 view .LVU60
+ 212 003c 9B69     		ldr	r3, [r3, #24]
+ 213 003e 03F00403 		and	r3, r3, #4
+ 214 0042 0393     		str	r3, [sp, #12]
+  77:rt_thread/bsp/src/board.c **** 
+ 215              		.loc 1 77 3 view .LVU61
+ 216 0044 039B     		ldr	r3, [sp, #12]
+ 217              	.LBE4:
+  77:rt_thread/bsp/src/board.c **** 
+ 218              		.loc 1 77 3 view .LVU62
+  80:rt_thread/bsp/src/board.c **** 
+ 219              		.loc 1 80 3 view .LVU63
+ 220 0046 0B4D     		ldr	r5, .L14+4
+ 221 0048 2246     		mov	r2, r4
+ 222 004a 4FF40051 		mov	r1, #8192
+ 223 004e 2846     		mov	r0, r5
+ 224 0050 FFF7FEFF 		bl	HAL_GPIO_WritePin
+ 225              	.LVL6:
+  83:rt_thread/bsp/src/board.c ****   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+ 226              		.loc 1 83 3 view .LVU64
+  83:rt_thread/bsp/src/board.c ****   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+ 227              		.loc 1 83 23 is_stmt 0 view .LVU65
+ 228 0054 4FF40053 		mov	r3, #8192
+ 229 0058 0493     		str	r3, [sp, #16]
+  84:rt_thread/bsp/src/board.c ****   GPIO_InitStruct.Pull = GPIO_NOPULL;
+ 230              		.loc 1 84 3 is_stmt 1 view .LVU66
+  84:rt_thread/bsp/src/board.c ****   GPIO_InitStruct.Pull = GPIO_NOPULL;
+ 231              		.loc 1 84 24 is_stmt 0 view .LVU67
+ 232 005a 1123     		movs	r3, #17
+ 233 005c 0593     		str	r3, [sp, #20]
+  85:rt_thread/bsp/src/board.c ****   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+ 234              		.loc 1 85 3 is_stmt 1 view .LVU68
+  85:rt_thread/bsp/src/board.c ****   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+ 235              		.loc 1 85 24 is_stmt 0 view .LVU69
+ARM GAS  /tmp/ccrWi8RQ.s 			page 9
+
+
+ 236 005e 0694     		str	r4, [sp, #24]
+  86:rt_thread/bsp/src/board.c ****   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+ 237              		.loc 1 86 3 is_stmt 1 view .LVU70
+  86:rt_thread/bsp/src/board.c ****   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+ 238              		.loc 1 86 25 is_stmt 0 view .LVU71
+ 239 0060 0223     		movs	r3, #2
+ 240 0062 0793     		str	r3, [sp, #28]
+  87:rt_thread/bsp/src/board.c **** 
+ 241              		.loc 1 87 3 is_stmt 1 view .LVU72
+ 242 0064 04A9     		add	r1, sp, #16
+ 243 0066 2846     		mov	r0, r5
+ 244 0068 FFF7FEFF 		bl	HAL_GPIO_Init
+ 245              	.LVL7:
+  89:rt_thread/bsp/src/board.c **** 
+ 246              		.loc 1 89 1 is_stmt 0 view .LVU73
+ 247 006c 09B0     		add	sp, sp, #36
+ 248              	.LCFI3:
+ 249              		.cfi_def_cfa_offset 12
+ 250              		@ sp needed
+ 251 006e 30BD     		pop	{r4, r5, pc}
+ 252              	.L15:
+ 253              		.align	2
+ 254              	.L14:
+ 255 0070 00100240 		.word	1073876992
+ 256 0074 00100140 		.word	1073811456
+ 257              		.cfi_endproc
+ 258              	.LFE82:
+ 260              		.section	.text.i2c_setup,"ax",%progbits
+ 261              		.align	1
+ 262              		.syntax unified
+ 263              		.thumb
+ 264              		.thumb_func
+ 266              	i2c_setup:
+ 267              	.LFB83:
+  93:rt_thread/bsp/src/board.c **** 
+ 268              		.loc 1 93 33 is_stmt 1 view -0
+ 269              		.cfi_startproc
+ 270              		@ args = 0, pretend = 0, frame = 24
+ 271              		@ frame_needed = 0, uses_anonymous_args = 0
+ 272 0000 10B5     		push	{r4, lr}
+ 273              	.LCFI4:
+ 274              		.cfi_def_cfa_offset 8
+ 275              		.cfi_offset 4, -8
+ 276              		.cfi_offset 14, -4
+ 277 0002 86B0     		sub	sp, sp, #24
+ 278              	.LCFI5:
+ 279              		.cfi_def_cfa_offset 32
+  95:rt_thread/bsp/src/board.c ****     __HAL_RCC_GPIOB_CLK_ENABLE();  
+ 280              		.loc 1 95 5 view .LVU75
+ 281              	.LBB5:
+  95:rt_thread/bsp/src/board.c ****     __HAL_RCC_GPIOB_CLK_ENABLE();  
+ 282              		.loc 1 95 5 view .LVU76
+  95:rt_thread/bsp/src/board.c ****     __HAL_RCC_GPIOB_CLK_ENABLE();  
+ 283              		.loc 1 95 5 view .LVU77
+ 284 0004 1B4B     		ldr	r3, .L20
+ 285 0006 DA69     		ldr	r2, [r3, #28]
+ 286 0008 42F40012 		orr	r2, r2, #2097152
+ARM GAS  /tmp/ccrWi8RQ.s 			page 10
+
+
+ 287 000c DA61     		str	r2, [r3, #28]
+  95:rt_thread/bsp/src/board.c ****     __HAL_RCC_GPIOB_CLK_ENABLE();  
+ 288              		.loc 1 95 5 view .LVU78
+ 289 000e DA69     		ldr	r2, [r3, #28]
+ 290 0010 02F40012 		and	r2, r2, #2097152
+ 291 0014 0092     		str	r2, [sp]
+  95:rt_thread/bsp/src/board.c ****     __HAL_RCC_GPIOB_CLK_ENABLE();  
+ 292              		.loc 1 95 5 view .LVU79
+ 293 0016 009A     		ldr	r2, [sp]
+ 294              	.LBE5:
+  95:rt_thread/bsp/src/board.c ****     __HAL_RCC_GPIOB_CLK_ENABLE();  
+ 295              		.loc 1 95 5 view .LVU80
+  96:rt_thread/bsp/src/board.c **** 
+ 296              		.loc 1 96 5 view .LVU81
+ 297              	.LBB6:
+  96:rt_thread/bsp/src/board.c **** 
+ 298              		.loc 1 96 5 view .LVU82
+  96:rt_thread/bsp/src/board.c **** 
+ 299              		.loc 1 96 5 view .LVU83
+ 300 0018 9A69     		ldr	r2, [r3, #24]
+ 301 001a 42F00802 		orr	r2, r2, #8
+ 302 001e 9A61     		str	r2, [r3, #24]
+  96:rt_thread/bsp/src/board.c **** 
+ 303              		.loc 1 96 5 view .LVU84
+ 304 0020 9B69     		ldr	r3, [r3, #24]
+ 305 0022 03F00803 		and	r3, r3, #8
+ 306 0026 0193     		str	r3, [sp, #4]
+  96:rt_thread/bsp/src/board.c **** 
+ 307              		.loc 1 96 5 view .LVU85
+ 308 0028 019B     		ldr	r3, [sp, #4]
+ 309              	.LBE6:
+  96:rt_thread/bsp/src/board.c **** 
+ 310              		.loc 1 96 5 view .LVU86
+  98:rt_thread/bsp/src/board.c **** 
+ 311              		.loc 1 98 5 view .LVU87
+  98:rt_thread/bsp/src/board.c **** 
+ 312              		.loc 1 98 22 is_stmt 0 view .LVU88
+ 313 002a 0024     		movs	r4, #0
+ 314 002c 0294     		str	r4, [sp, #8]
+ 315 002e 0394     		str	r4, [sp, #12]
+ 316 0030 0494     		str	r4, [sp, #16]
+ 317 0032 0594     		str	r4, [sp, #20]
+ 101:rt_thread/bsp/src/board.c ****     GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;    
+ 318              		.loc 1 101 5 is_stmt 1 view .LVU89
+ 101:rt_thread/bsp/src/board.c ****     GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;    
+ 319              		.loc 1 101 25 is_stmt 0 view .LVU90
+ 320 0034 C023     		movs	r3, #192
+ 321 0036 0293     		str	r3, [sp, #8]
+ 102:rt_thread/bsp/src/board.c ****     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+ 322              		.loc 1 102 5 is_stmt 1 view .LVU91
+ 102:rt_thread/bsp/src/board.c ****     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+ 323              		.loc 1 102 26 is_stmt 0 view .LVU92
+ 324 0038 1223     		movs	r3, #18
+ 325 003a 0393     		str	r3, [sp, #12]
+ 103:rt_thread/bsp/src/board.c ****     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+ 326              		.loc 1 103 5 is_stmt 1 view .LVU93
+ 103:rt_thread/bsp/src/board.c ****     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+ARM GAS  /tmp/ccrWi8RQ.s 			page 11
+
+
+ 327              		.loc 1 103 27 is_stmt 0 view .LVU94
+ 328 003c 0323     		movs	r3, #3
+ 329 003e 0593     		str	r3, [sp, #20]
+ 104:rt_thread/bsp/src/board.c ****    
+ 330              		.loc 1 104 5 is_stmt 1 view .LVU95
+ 331 0040 02A9     		add	r1, sp, #8
+ 332 0042 0D48     		ldr	r0, .L20+4
+ 333 0044 FFF7FEFF 		bl	HAL_GPIO_Init
+ 334              	.LVL8:
+ 106:rt_thread/bsp/src/board.c ****     hi2c1.Init.ClockSpeed = 400000;            
+ 335              		.loc 1 106 5 view .LVU96
+ 106:rt_thread/bsp/src/board.c ****     hi2c1.Init.ClockSpeed = 400000;            
+ 336              		.loc 1 106 20 is_stmt 0 view .LVU97
+ 337 0048 0C48     		ldr	r0, .L20+8
+ 338 004a 0D4B     		ldr	r3, .L20+12
+ 339 004c 0360     		str	r3, [r0]
+ 107:rt_thread/bsp/src/board.c ****     hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;    
+ 340              		.loc 1 107 5 is_stmt 1 view .LVU98
+ 107:rt_thread/bsp/src/board.c ****     hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;    
+ 341              		.loc 1 107 27 is_stmt 0 view .LVU99
+ 342 004e 0D4B     		ldr	r3, .L20+16
+ 343 0050 4360     		str	r3, [r0, #4]
+ 108:rt_thread/bsp/src/board.c ****     hi2c1.Init.OwnAddress1 = 0;                
+ 344              		.loc 1 108 5 is_stmt 1 view .LVU100
+ 108:rt_thread/bsp/src/board.c ****     hi2c1.Init.OwnAddress1 = 0;                
+ 345              		.loc 1 108 26 is_stmt 0 view .LVU101
+ 346 0052 8460     		str	r4, [r0, #8]
+ 109:rt_thread/bsp/src/board.c ****     hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;  
+ 347              		.loc 1 109 5 is_stmt 1 view .LVU102
+ 109:rt_thread/bsp/src/board.c ****     hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;  
+ 348              		.loc 1 109 28 is_stmt 0 view .LVU103
+ 349 0054 C460     		str	r4, [r0, #12]
+ 110:rt_thread/bsp/src/board.c ****     hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+ 350              		.loc 1 110 5 is_stmt 1 view .LVU104
+ 110:rt_thread/bsp/src/board.c ****     hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+ 351              		.loc 1 110 31 is_stmt 0 view .LVU105
+ 352 0056 4FF48043 		mov	r3, #16384
+ 353 005a 0361     		str	r3, [r0, #16]
+ 111:rt_thread/bsp/src/board.c ****     hi2c1.Init.OwnAddress2 = 0;
+ 354              		.loc 1 111 5 is_stmt 1 view .LVU106
+ 111:rt_thread/bsp/src/board.c ****     hi2c1.Init.OwnAddress2 = 0;
+ 355              		.loc 1 111 32 is_stmt 0 view .LVU107
+ 356 005c 4461     		str	r4, [r0, #20]
+ 112:rt_thread/bsp/src/board.c ****     hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+ 357              		.loc 1 112 5 is_stmt 1 view .LVU108
+ 112:rt_thread/bsp/src/board.c ****     hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+ 358              		.loc 1 112 28 is_stmt 0 view .LVU109
+ 359 005e 8461     		str	r4, [r0, #24]
+ 113:rt_thread/bsp/src/board.c ****     hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;     
+ 360              		.loc 1 113 5 is_stmt 1 view .LVU110
+ 113:rt_thread/bsp/src/board.c ****     hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;     
+ 361              		.loc 1 113 32 is_stmt 0 view .LVU111
+ 362 0060 C461     		str	r4, [r0, #28]
+ 114:rt_thread/bsp/src/board.c **** 
+ 363              		.loc 1 114 5 is_stmt 1 view .LVU112
+ 114:rt_thread/bsp/src/board.c **** 
+ 364              		.loc 1 114 30 is_stmt 0 view .LVU113
+ARM GAS  /tmp/ccrWi8RQ.s 			page 12
+
+
+ 365 0062 0462     		str	r4, [r0, #32]
+ 116:rt_thread/bsp/src/board.c ****     {
+ 366              		.loc 1 116 5 is_stmt 1 view .LVU114
+ 116:rt_thread/bsp/src/board.c ****     {
+ 367              		.loc 1 116 9 is_stmt 0 view .LVU115
+ 368 0064 FFF7FEFF 		bl	HAL_I2C_Init
+ 369              	.LVL9:
+ 116:rt_thread/bsp/src/board.c ****     {
+ 370              		.loc 1 116 8 view .LVU116
+ 371 0068 00B1     		cbz	r0, .L17
+ 372              	.L18:
+ 118:rt_thread/bsp/src/board.c ****     }
+ 373              		.loc 1 118 9 is_stmt 1 discriminator 1 view .LVU117
+ 118:rt_thread/bsp/src/board.c ****     }
+ 374              		.loc 1 118 17 discriminator 1 view .LVU118
+ 118:rt_thread/bsp/src/board.c ****     }
+ 375              		.loc 1 118 14 discriminator 1 view .LVU119
+ 376 006a FEE7     		b	.L18
+ 377              	.L17:
+ 120:rt_thread/bsp/src/board.c **** }
+ 378              		.loc 1 120 5 view .LVU120
+ 121:rt_thread/bsp/src/board.c **** 
+ 379              		.loc 1 121 1 is_stmt 0 view .LVU121
+ 380 006c 0020     		movs	r0, #0
+ 381 006e 06B0     		add	sp, sp, #24
+ 382              	.LCFI6:
+ 383              		.cfi_def_cfa_offset 8
+ 384              		@ sp needed
+ 385 0070 10BD     		pop	{r4, pc}
+ 386              	.L21:
+ 387 0072 00BF     		.align	2
+ 388              	.L20:
+ 389 0074 00100240 		.word	1073876992
+ 390 0078 000C0140 		.word	1073810432
+ 391 007c 00000000 		.word	.LANCHOR1
+ 392 0080 00540040 		.word	1073763328
+ 393 0084 801A0600 		.word	400000
+ 394              		.cfi_endproc
+ 395              	.LFE83:
+ 397              		.section	.text.rt_hw_console_output,"ax",%progbits
+ 398              		.align	1
+ 399              		.global	rt_hw_console_output
+ 400              		.syntax unified
+ 401              		.thumb
+ 402              		.thumb_func
+ 404              	rt_hw_console_output:
+ 405              	.LVL10:
+ 406              	.LFB81:
+  52:rt_thread/bsp/src/board.c ****     rt_size_t i = 0, size = 0;
+ 407              		.loc 1 52 1 is_stmt 1 view -0
+ 408              		.cfi_startproc
+ 409              		@ args = 0, pretend = 0, frame = 8
+ 410              		@ frame_needed = 0, uses_anonymous_args = 0
+  52:rt_thread/bsp/src/board.c ****     rt_size_t i = 0, size = 0;
+ 411              		.loc 1 52 1 is_stmt 0 view .LVU123
+ 412 0000 F0B5     		push	{r4, r5, r6, r7, lr}
+ 413              	.LCFI7:
+ARM GAS  /tmp/ccrWi8RQ.s 			page 13
+
+
+ 414              		.cfi_def_cfa_offset 20
+ 415              		.cfi_offset 4, -20
+ 416              		.cfi_offset 5, -16
+ 417              		.cfi_offset 6, -12
+ 418              		.cfi_offset 7, -8
+ 419              		.cfi_offset 14, -4
+ 420 0002 83B0     		sub	sp, sp, #12
+ 421              	.LCFI8:
+ 422              		.cfi_def_cfa_offset 32
+ 423 0004 0546     		mov	r5, r0
+  53:rt_thread/bsp/src/board.c ****     char a = '\r';
+ 424              		.loc 1 53 5 is_stmt 1 view .LVU124
+ 425              	.LVL11:
+  54:rt_thread/bsp/src/board.c **** 
+ 426              		.loc 1 54 5 view .LVU125
+  54:rt_thread/bsp/src/board.c **** 
+ 427              		.loc 1 54 10 is_stmt 0 view .LVU126
+ 428 0006 0D23     		movs	r3, #13
+ 429 0008 8DF80730 		strb	r3, [sp, #7]
+  56:rt_thread/bsp/src/board.c **** 
+ 430              		.loc 1 56 5 is_stmt 1 view .LVU127
+  56:rt_thread/bsp/src/board.c **** 
+ 431              		.loc 1 56 5 view .LVU128
+ 432 000c 0024     		movs	r4, #0
+ 433 000e 0F4B     		ldr	r3, .L28
+ 434 0010 83F84040 		strb	r4, [r3, #64]
+  56:rt_thread/bsp/src/board.c **** 
+ 435              		.loc 1 56 5 view .LVU129
+  58:rt_thread/bsp/src/board.c **** 
+ 436              		.loc 1 58 5 view .LVU130
+  58:rt_thread/bsp/src/board.c **** 
+ 437              		.loc 1 58 12 is_stmt 0 view .LVU131
+ 438 0014 FFF7FEFF 		bl	rt_strlen
+ 439              	.LVL12:
+  58:rt_thread/bsp/src/board.c **** 
+ 440              		.loc 1 58 12 view .LVU132
+ 441 0018 0746     		mov	r7, r0
+ 442              	.LVL13:
+  60:rt_thread/bsp/src/board.c ****     {
+ 443              		.loc 1 60 5 is_stmt 1 view .LVU133
+  60:rt_thread/bsp/src/board.c ****     {
+ 444              		.loc 1 60 5 is_stmt 0 view .LVU134
+ 445 001a 06E0     		b	.L23
+ 446              	.LVL14:
+ 447              	.L24:
+  66:rt_thread/bsp/src/board.c ****     }
+ 448              		.loc 1 66 9 is_stmt 1 discriminator 2 view .LVU135
+ 449 001c 0123     		movs	r3, #1
+ 450 001e 1A46     		mov	r2, r3
+ 451 0020 3146     		mov	r1, r6
+ 452 0022 0A48     		ldr	r0, .L28
+ 453 0024 FFF7FEFF 		bl	HAL_UART_Transmit
+ 454              	.LVL15:
+  60:rt_thread/bsp/src/board.c ****     {
+ 455              		.loc 1 60 27 discriminator 2 view .LVU136
+  60:rt_thread/bsp/src/board.c ****     {
+ 456              		.loc 1 60 28 is_stmt 0 discriminator 2 view .LVU137
+ARM GAS  /tmp/ccrWi8RQ.s 			page 14
+
+
+ 457 0028 0134     		adds	r4, r4, #1
+ 458              	.LVL16:
+ 459              	.L23:
+  60:rt_thread/bsp/src/board.c ****     {
+ 460              		.loc 1 60 17 is_stmt 1 discriminator 1 view .LVU138
+  60:rt_thread/bsp/src/board.c ****     {
+ 461              		.loc 1 60 5 is_stmt 0 discriminator 1 view .LVU139
+ 462 002a BC42     		cmp	r4, r7
+ 463 002c 0BD2     		bcs	.L27
+  62:rt_thread/bsp/src/board.c ****         {
+ 464              		.loc 1 62 9 is_stmt 1 view .LVU140
+  62:rt_thread/bsp/src/board.c ****         {
+ 465              		.loc 1 62 19 is_stmt 0 view .LVU141
+ 466 002e 2E19     		adds	r6, r5, r4
+  62:rt_thread/bsp/src/board.c ****         {
+ 467              		.loc 1 62 13 view .LVU142
+ 468 0030 2B5D     		ldrb	r3, [r5, r4]	@ zero_extendqisi2
+  62:rt_thread/bsp/src/board.c ****         {
+ 469              		.loc 1 62 12 view .LVU143
+ 470 0032 0A2B     		cmp	r3, #10
+ 471 0034 F2D1     		bne	.L24
+  64:rt_thread/bsp/src/board.c ****         }
+ 472              		.loc 1 64 13 is_stmt 1 view .LVU144
+ 473 0036 0123     		movs	r3, #1
+ 474 0038 1A46     		mov	r2, r3
+ 475 003a 0DF10701 		add	r1, sp, #7
+ 476 003e 0348     		ldr	r0, .L28
+ 477 0040 FFF7FEFF 		bl	HAL_UART_Transmit
+ 478              	.LVL17:
+ 479 0044 EAE7     		b	.L24
+ 480              	.L27:
+  68:rt_thread/bsp/src/board.c **** #endif
+ 481              		.loc 1 68 1 is_stmt 0 view .LVU145
+ 482 0046 03B0     		add	sp, sp, #12
+ 483              	.LCFI9:
+ 484              		.cfi_def_cfa_offset 20
+ 485              		@ sp needed
+ 486 0048 F0BD     		pop	{r4, r5, r6, r7, pc}
+ 487              	.LVL18:
+ 488              	.L29:
+  68:rt_thread/bsp/src/board.c **** #endif
+ 489              		.loc 1 68 1 view .LVU146
+ 490 004a 00BF     		.align	2
+ 491              	.L28:
+ 492 004c 00000000 		.word	.LANCHOR0
+ 493              		.cfi_endproc
+ 494              	.LFE81:
+ 496              		.section	.rodata.screen_setup.str1.4,"aMS",%progbits,1
+ 497              		.align	2
+ 498              	.LC1:
+ 499 0000 64617461 		.ascii	"data transmit success!\012\000"
+ 499      20747261 
+ 499      6E736D69 
+ 499      74207375 
+ 499      63636573 
+ 500              		.align	2
+ 501              	.LC2:
+ARM GAS  /tmp/ccrWi8RQ.s 			page 15
+
+
+ 502 0018 64617461 		.ascii	"data transmit error!\012\000"
+ 502      20747261 
+ 502      6E736D69 
+ 502      74206572 
+ 502      726F7221 
+ 503              		.section	.text.screen_setup,"ax",%progbits
+ 504              		.align	1
+ 505              		.global	screen_setup
+ 506              		.syntax unified
+ 507              		.thumb
+ 508              		.thumb_func
+ 510              	screen_setup:
+ 511              	.LFB84:
+ 124:rt_thread/bsp/src/board.c ****     uint8_t screen_init_command[] = {
+ 512              		.loc 1 124 1 is_stmt 1 view -0
+ 513              		.cfi_startproc
+ 514              		@ args = 0, pretend = 0, frame = 24
+ 515              		@ frame_needed = 0, uses_anonymous_args = 0
+ 516 0000 10B5     		push	{r4, lr}
+ 517              	.LCFI10:
+ 518              		.cfi_def_cfa_offset 8
+ 519              		.cfi_offset 4, -8
+ 520              		.cfi_offset 14, -4
+ 521 0002 88B0     		sub	sp, sp, #32
+ 522              	.LCFI11:
+ 523              		.cfi_def_cfa_offset 40
+ 125:rt_thread/bsp/src/board.c ****         0x00, // Command Stream
+ 524              		.loc 1 125 5 view .LVU148
+ 125:rt_thread/bsp/src/board.c ****         0x00, // Command Stream
+ 525              		.loc 1 125 13 is_stmt 0 view .LVU149
+ 526 0004 0DF10C0C 		add	ip, sp, #12
+ 527 0008 0E4C     		ldr	r4, .L34
+ 528 000a 0FCC     		ldmia	r4!, {r0, r1, r2, r3}
+ 529 000c ACE80F00 		stmia	ip!, {r0, r1, r2, r3}
+ 530 0010 2368     		ldr	r3, [r4]
+ 531 0012 2CF8023B 		strh	r3, [ip], #2	@ movhi
+ 532 0016 1B0C     		lsrs	r3, r3, #16
+ 533 0018 8CF80030 		strb	r3, [ip]
+ 140:rt_thread/bsp/src/board.c **** 
+ 534              		.loc 1 140 5 is_stmt 1 view .LVU150
+ 535              	.LVL19:
+ 142:rt_thread/bsp/src/board.c ****     {
+ 536              		.loc 1 142 5 view .LVU151
+ 142:rt_thread/bsp/src/board.c ****     {
+ 537              		.loc 1 142 9 is_stmt 0 view .LVU152
+ 538 001c 4FF0FF33 		mov	r3, #-1
+ 539 0020 0093     		str	r3, [sp]
+ 540 0022 1323     		movs	r3, #19
+ 541 0024 03AA     		add	r2, sp, #12
+ 542 0026 F021     		movs	r1, #240
+ 543 0028 0748     		ldr	r0, .L34+4
+ 544 002a FFF7FEFF 		bl	HAL_I2C_Master_Transmit
+ 545              	.LVL20:
+ 142:rt_thread/bsp/src/board.c ****     {
+ 546              		.loc 1 142 8 view .LVU153
+ 547 002e 20B9     		cbnz	r0, .L31
+ 144:rt_thread/bsp/src/board.c ****     }
+ARM GAS  /tmp/ccrWi8RQ.s 			page 16
+
+
+ 548              		.loc 1 144 7 is_stmt 1 view .LVU154
+ 549 0030 0648     		ldr	r0, .L34+8
+ 550 0032 FFF7FEFF 		bl	rt_kprintf
+ 551              	.LVL21:
+ 552              	.L30:
+ 150:rt_thread/bsp/src/board.c **** // Updates the variable SystemCoreClock and must be called 
+ 553              		.loc 1 150 1 is_stmt 0 view .LVU155
+ 554 0036 08B0     		add	sp, sp, #32
+ 555              	.LCFI12:
+ 556              		.cfi_remember_state
+ 557              		.cfi_def_cfa_offset 8
+ 558              		@ sp needed
+ 559 0038 10BD     		pop	{r4, pc}
+ 560              	.L31:
+ 561              	.LCFI13:
+ 562              		.cfi_restore_state
+ 148:rt_thread/bsp/src/board.c ****     }
+ 563              		.loc 1 148 7 is_stmt 1 view .LVU156
+ 564 003a 0548     		ldr	r0, .L34+12
+ 565 003c FFF7FEFF 		bl	rt_kprintf
+ 566              	.LVL22:
+ 150:rt_thread/bsp/src/board.c **** // Updates the variable SystemCoreClock and must be called 
+ 567              		.loc 1 150 1 is_stmt 0 view .LVU157
+ 568 0040 F9E7     		b	.L30
+ 569              	.L35:
+ 570 0042 00BF     		.align	2
+ 571              	.L34:
+ 572 0044 00000000 		.word	.LANCHOR2
+ 573 0048 00000000 		.word	.LANCHOR1
+ 574 004c 00000000 		.word	.LC1
+ 575 0050 18000000 		.word	.LC2
+ 576              		.cfi_endproc
+ 577              	.LFE84:
+ 579              		.section	.text.rt_heap_begin_get,"ax",%progbits
+ 580              		.align	1
+ 581              		.weak	rt_heap_begin_get
+ 582              		.syntax unified
+ 583              		.thumb
+ 584              		.thumb_func
+ 586              	rt_heap_begin_get:
+ 587              	.LFB86:
+ 173:rt_thread/bsp/src/board.c **** 
+ 174:rt_thread/bsp/src/board.c **** #if defined(RT_USING_USER_MAIN) && defined(RT_USING_HEAP)
+ 175:rt_thread/bsp/src/board.c **** #define RT_HEAP_SIZE 1024
+ 176:rt_thread/bsp/src/board.c **** static uint32_t rt_heap[RT_HEAP_SIZE];     // heap default size: 4K(1024 * 4)
+ 177:rt_thread/bsp/src/board.c **** RT_WEAK void *rt_heap_begin_get(void)
+ 178:rt_thread/bsp/src/board.c **** {
+ 588              		.loc 1 178 1 is_stmt 1 view -0
+ 589              		.cfi_startproc
+ 590              		@ args = 0, pretend = 0, frame = 0
+ 591              		@ frame_needed = 0, uses_anonymous_args = 0
+ 592              		@ link register save eliminated.
+ 179:rt_thread/bsp/src/board.c ****     return rt_heap;
+ 593              		.loc 1 179 5 view .LVU159
+ 180:rt_thread/bsp/src/board.c **** }
+ 594              		.loc 1 180 1 is_stmt 0 view .LVU160
+ 595 0000 0048     		ldr	r0, .L37
+ARM GAS  /tmp/ccrWi8RQ.s 			page 17
+
+
+ 596 0002 7047     		bx	lr
+ 597              	.L38:
+ 598              		.align	2
+ 599              	.L37:
+ 600 0004 00000000 		.word	rt_heap
+ 601              		.cfi_endproc
+ 602              	.LFE86:
+ 604              		.section	.text.rt_heap_end_get,"ax",%progbits
+ 605              		.align	1
+ 606              		.weak	rt_heap_end_get
+ 607              		.syntax unified
+ 608              		.thumb
+ 609              		.thumb_func
+ 611              	rt_heap_end_get:
+ 612              	.LFB87:
+ 181:rt_thread/bsp/src/board.c **** 
+ 182:rt_thread/bsp/src/board.c **** RT_WEAK void *rt_heap_end_get(void)
+ 183:rt_thread/bsp/src/board.c **** {
+ 613              		.loc 1 183 1 is_stmt 1 view -0
+ 614              		.cfi_startproc
+ 615              		@ args = 0, pretend = 0, frame = 0
+ 616              		@ frame_needed = 0, uses_anonymous_args = 0
+ 617              		@ link register save eliminated.
+ 184:rt_thread/bsp/src/board.c ****     return rt_heap + RT_HEAP_SIZE;
+ 618              		.loc 1 184 5 view .LVU162
+ 185:rt_thread/bsp/src/board.c **** }
+ 619              		.loc 1 185 1 is_stmt 0 view .LVU163
+ 620 0000 0048     		ldr	r0, .L40
+ 621 0002 7047     		bx	lr
+ 622              	.L41:
+ 623              		.align	2
+ 624              	.L40:
+ 625 0004 00100000 		.word	rt_heap+4096
+ 626              		.cfi_endproc
+ 627              	.LFE87:
+ 629              		.section	.text.rt_hw_board_init,"ax",%progbits
+ 630              		.align	1
+ 631              		.global	rt_hw_board_init
+ 632              		.syntax unified
+ 633              		.thumb
+ 634              		.thumb_func
+ 636              	rt_hw_board_init:
+ 637              	.LFB88:
+ 186:rt_thread/bsp/src/board.c **** #endif
+ 187:rt_thread/bsp/src/board.c **** 
+ 188:rt_thread/bsp/src/board.c **** /**
+ 189:rt_thread/bsp/src/board.c ****  * This function will initial your board.
+ 190:rt_thread/bsp/src/board.c ****  */
+ 191:rt_thread/bsp/src/board.c **** void rt_hw_board_init()
+ 192:rt_thread/bsp/src/board.c **** {
+ 638              		.loc 1 192 1 is_stmt 1 view -0
+ 639              		.cfi_startproc
+ 640              		@ args = 0, pretend = 0, frame = 0
+ 641              		@ frame_needed = 0, uses_anonymous_args = 0
+ 642 0000 10B5     		push	{r4, lr}
+ 643              	.LCFI14:
+ 644              		.cfi_def_cfa_offset 8
+ARM GAS  /tmp/ccrWi8RQ.s 			page 18
+
+
+ 645              		.cfi_offset 4, -8
+ 646              		.cfi_offset 14, -4
+ 193:rt_thread/bsp/src/board.c ****     HAL_Init();
+ 647              		.loc 1 193 5 view .LVU165
+ 648 0002 FFF7FEFF 		bl	HAL_Init
+ 649              	.LVL23:
+ 194:rt_thread/bsp/src/board.c ****     /* System Clock Update */
+ 195:rt_thread/bsp/src/board.c ****     SystemCoreClockUpdate();
+ 650              		.loc 1 195 5 view .LVU166
+ 651 0006 FFF7FEFF 		bl	SystemCoreClockUpdate
+ 652              	.LVL24:
+ 196:rt_thread/bsp/src/board.c ****     /* System Tick Configuration */
+ 197:rt_thread/bsp/src/board.c ****     _SysTick_Config(SystemCoreClock / RT_TICK_PER_SECOND);
+ 653              		.loc 1 197 5 view .LVU167
+ 654 000a 0D4B     		ldr	r3, .L44
+ 655 000c 1868     		ldr	r0, [r3]
+ 656              		.loc 1 197 37 is_stmt 0 view .LVU168
+ 657 000e 0D4B     		ldr	r3, .L44+4
+ 658 0010 A3FB0030 		umull	r3, r0, r3, r0
+ 659              		.loc 1 197 5 view .LVU169
+ 660 0014 8009     		lsrs	r0, r0, #6
+ 661 0016 FFF7FEFF 		bl	_SysTick_Config
+ 662              	.LVL25:
+ 198:rt_thread/bsp/src/board.c **** 
+ 199:rt_thread/bsp/src/board.c ****     uart_setup();
+ 663              		.loc 1 199 5 is_stmt 1 view .LVU170
+ 664 001a FFF7FEFF 		bl	uart_setup
+ 665              	.LVL26:
+ 200:rt_thread/bsp/src/board.c ****     
+ 201:rt_thread/bsp/src/board.c ****     gpio_setup();
+ 666              		.loc 1 201 5 view .LVU171
+ 667 001e FFF7FEFF 		bl	gpio_setup
+ 668              	.LVL27:
+ 202:rt_thread/bsp/src/board.c **** 
+ 203:rt_thread/bsp/src/board.c ****     i2c_setup();
+ 669              		.loc 1 203 5 view .LVU172
+ 670 0022 FFF7FEFF 		bl	i2c_setup
+ 671              	.LVL28:
+ 204:rt_thread/bsp/src/board.c **** 
+ 205:rt_thread/bsp/src/board.c ****     /* Call components board initial (use INIT_BOARD_EXPORT()) */
+ 206:rt_thread/bsp/src/board.c **** #ifdef RT_USING_COMPONENTS_INIT
+ 207:rt_thread/bsp/src/board.c ****     rt_components_board_init();
+ 672              		.loc 1 207 5 view .LVU173
+ 673 0026 FFF7FEFF 		bl	rt_components_board_init
+ 674              	.LVL29:
+ 208:rt_thread/bsp/src/board.c **** #endif
+ 209:rt_thread/bsp/src/board.c **** 
+ 210:rt_thread/bsp/src/board.c **** #if defined(RT_USING_USER_MAIN) && defined(RT_USING_HEAP)
+ 211:rt_thread/bsp/src/board.c ****     rt_system_heap_init(rt_heap_begin_get(), rt_heap_end_get());
+ 675              		.loc 1 211 5 view .LVU174
+ 676 002a FFF7FEFF 		bl	rt_heap_begin_get
+ 677              	.LVL30:
+ 678 002e 0446     		mov	r4, r0
+ 679 0030 FFF7FEFF 		bl	rt_heap_end_get
+ 680              	.LVL31:
+ 681 0034 0146     		mov	r1, r0
+ 682 0036 2046     		mov	r0, r4
+ARM GAS  /tmp/ccrWi8RQ.s 			page 19
+
+
+ 683 0038 FFF7FEFF 		bl	rt_system_heap_init
+ 684              	.LVL32:
+ 212:rt_thread/bsp/src/board.c **** #endif
+ 213:rt_thread/bsp/src/board.c **** }
+ 685              		.loc 1 213 1 is_stmt 0 view .LVU175
+ 686 003c 10BD     		pop	{r4, pc}
+ 687              	.L45:
+ 688 003e 00BF     		.align	2
+ 689              	.L44:
+ 690 0040 00000000 		.word	SystemCoreClock
+ 691 0044 D34D6210 		.word	274877907
+ 692              		.cfi_endproc
+ 693              	.LFE88:
+ 695              		.section	.text.SysTick_Handler,"ax",%progbits
+ 696              		.align	1
+ 697              		.global	SysTick_Handler
+ 698              		.syntax unified
+ 699              		.thumb
+ 700              		.thumb_func
+ 702              	SysTick_Handler:
+ 703              	.LFB89:
+ 214:rt_thread/bsp/src/board.c **** 
+ 215:rt_thread/bsp/src/board.c **** void SysTick_Handler(void)
+ 216:rt_thread/bsp/src/board.c **** {
+ 704              		.loc 1 216 1 is_stmt 1 view -0
+ 705              		.cfi_startproc
+ 706              		@ args = 0, pretend = 0, frame = 0
+ 707              		@ frame_needed = 0, uses_anonymous_args = 0
+ 708 0000 08B5     		push	{r3, lr}
+ 709              	.LCFI15:
+ 710              		.cfi_def_cfa_offset 8
+ 711              		.cfi_offset 3, -8
+ 712              		.cfi_offset 14, -4
+ 217:rt_thread/bsp/src/board.c ****     /* enter interrupt */
+ 218:rt_thread/bsp/src/board.c ****     rt_interrupt_enter();
+ 713              		.loc 1 218 5 view .LVU177
+ 714 0002 FFF7FEFF 		bl	rt_interrupt_enter
+ 715              	.LVL33:
+ 219:rt_thread/bsp/src/board.c **** 
+ 220:rt_thread/bsp/src/board.c ****     rt_tick_increase();
+ 716              		.loc 1 220 5 view .LVU178
+ 717 0006 FFF7FEFF 		bl	rt_tick_increase
+ 718              	.LVL34:
+ 221:rt_thread/bsp/src/board.c **** 
+ 222:rt_thread/bsp/src/board.c ****     /* leave interrupt */
+ 223:rt_thread/bsp/src/board.c ****     rt_interrupt_leave();
+ 719              		.loc 1 223 5 view .LVU179
+ 720 000a FFF7FEFF 		bl	rt_interrupt_leave
+ 721              	.LVL35:
+ 224:rt_thread/bsp/src/board.c **** }
+ 722              		.loc 1 224 1 is_stmt 0 view .LVU180
+ 723 000e 08BD     		pop	{r3, pc}
+ 724              		.cfi_endproc
+ 725              	.LFE89:
+ 727              		.global	hi2c1
+ 728              		.global	__rt_init_uart_setup
+ 729              		.section	.rodata
+ARM GAS  /tmp/ccrWi8RQ.s 			page 20
+
+
+ 730              		.align	2
+ 731              		.set	.LANCHOR2,. + 0
+ 732              	.LC0:
+ 733 0000 00A83FD3 		.ascii	"\000\250?\323\000@\240\300\332\002\201\177\245\246\325"
+ 733      0040A0C0 
+ 733      DA02817F 
+ 733      A5A6D5
+ 734 000f 808D14AF 		.ascii	"\200\215\024\257"
+ 735              		.section	.bss.hi2c1,"aw",%nobits
+ 736              		.align	2
+ 737              		.set	.LANCHOR1,. + 0
+ 740              	hi2c1:
+ 741 0000 00000000 		.space	84
+ 741      00000000 
+ 741      00000000 
+ 741      00000000 
+ 741      00000000 
+ 742              		.section	.bss.huart1,"aw",%nobits
+ 743              		.align	2
+ 744              		.set	.LANCHOR0,. + 0
+ 747              	huart1:
+ 748 0000 00000000 		.space	72
+ 748      00000000 
+ 748      00000000 
+ 748      00000000 
+ 748      00000000 
+ 749              		.section	.bss.rt_heap,"aw",%nobits
+ 750              		.align	2
+ 753              	rt_heap:
+ 754 0000 00000000 		.space	4096
+ 754      00000000 
+ 754      00000000 
+ 754      00000000 
+ 754      00000000 
+ 755              		.section	.rti_fn.1,"a"
+ 756              		.align	2
+ 759              	__rt_init_uart_setup:
+ 760 0000 00000000 		.word	uart_setup
+ 761              		.text
+ 762              	.Letext0:
+ 763              		.file 2 "/opt/arm-none-eabi-tools/arm-none-eabi/include/machine/_default_types.h"
+ 764              		.file 3 "/opt/arm-none-eabi-tools/arm-none-eabi/include/sys/_stdint.h"
+ 765              		.file 4 "rt_thread/include/rtdef.h"
+ 766              		.file 5 "Drivers/CMSIS/Device/ST/STM32F1xx/Include/stm32f103xb.h"
+ 767              		.file 6 "Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_def.h"
+ 768              		.file 7 "Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_gpio.h"
+ 769              		.file 8 "Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_dma.h"
+ 770              		.file 9 "Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_i2c.h"
+ 771              		.file 10 "Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h"
+ 772              		.file 11 "Drivers/CMSIS/Device/ST/STM32F1xx/Include/system_stm32f1xx.h"
+ 773              		.file 12 "rt_thread/include/rtthread.h"
+ 774              		.file 13 "Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal.h"
+ARM GAS  /tmp/ccrWi8RQ.s 			page 21
+
+
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 board.c
+     /tmp/ccrWi8RQ.s:18     .text._SysTick_Config:0000000000000000 $t
+     /tmp/ccrWi8RQ.s:23     .text._SysTick_Config:0000000000000000 _SysTick_Config
+     /tmp/ccrWi8RQ.s:71     .text._SysTick_Config:0000000000000024 $d
+     /tmp/ccrWi8RQ.s:76     .text.uart_setup:0000000000000000 $t
+     /tmp/ccrWi8RQ.s:81     .text.uart_setup:0000000000000000 uart_setup
+     /tmp/ccrWi8RQ.s:140    .text.uart_setup:000000000000002c $d
+     /tmp/ccrWi8RQ.s:146    .text.gpio_setup:0000000000000000 $t
+     /tmp/ccrWi8RQ.s:151    .text.gpio_setup:0000000000000000 gpio_setup
+     /tmp/ccrWi8RQ.s:255    .text.gpio_setup:0000000000000070 $d
+     /tmp/ccrWi8RQ.s:261    .text.i2c_setup:0000000000000000 $t
+     /tmp/ccrWi8RQ.s:266    .text.i2c_setup:0000000000000000 i2c_setup
+     /tmp/ccrWi8RQ.s:389    .text.i2c_setup:0000000000000074 $d
+     /tmp/ccrWi8RQ.s:398    .text.rt_hw_console_output:0000000000000000 $t
+     /tmp/ccrWi8RQ.s:404    .text.rt_hw_console_output:0000000000000000 rt_hw_console_output
+     /tmp/ccrWi8RQ.s:492    .text.rt_hw_console_output:000000000000004c $d
+     /tmp/ccrWi8RQ.s:497    .rodata.screen_setup.str1.4:0000000000000000 $d
+     /tmp/ccrWi8RQ.s:504    .text.screen_setup:0000000000000000 $t
+     /tmp/ccrWi8RQ.s:510    .text.screen_setup:0000000000000000 screen_setup
+     /tmp/ccrWi8RQ.s:572    .text.screen_setup:0000000000000044 $d
+     /tmp/ccrWi8RQ.s:580    .text.rt_heap_begin_get:0000000000000000 $t
+     /tmp/ccrWi8RQ.s:586    .text.rt_heap_begin_get:0000000000000000 rt_heap_begin_get
+     /tmp/ccrWi8RQ.s:600    .text.rt_heap_begin_get:0000000000000004 $d
+     /tmp/ccrWi8RQ.s:753    .bss.rt_heap:0000000000000000 rt_heap
+     /tmp/ccrWi8RQ.s:605    .text.rt_heap_end_get:0000000000000000 $t
+     /tmp/ccrWi8RQ.s:611    .text.rt_heap_end_get:0000000000000000 rt_heap_end_get
+     /tmp/ccrWi8RQ.s:625    .text.rt_heap_end_get:0000000000000004 $d
+     /tmp/ccrWi8RQ.s:630    .text.rt_hw_board_init:0000000000000000 $t
+     /tmp/ccrWi8RQ.s:636    .text.rt_hw_board_init:0000000000000000 rt_hw_board_init
+     /tmp/ccrWi8RQ.s:690    .text.rt_hw_board_init:0000000000000040 $d
+     /tmp/ccrWi8RQ.s:696    .text.SysTick_Handler:0000000000000000 $t
+     /tmp/ccrWi8RQ.s:702    .text.SysTick_Handler:0000000000000000 SysTick_Handler
+     /tmp/ccrWi8RQ.s:740    .bss.hi2c1:0000000000000000 hi2c1
+     /tmp/ccrWi8RQ.s:759    .rti_fn.1:0000000000000000 __rt_init_uart_setup
+     /tmp/ccrWi8RQ.s:730    .rodata:0000000000000000 $d
+     /tmp/ccrWi8RQ.s:736    .bss.hi2c1:0000000000000000 $d
+     /tmp/ccrWi8RQ.s:743    .bss.huart1:0000000000000000 $d
+     /tmp/ccrWi8RQ.s:747    .bss.huart1:0000000000000000 huart1
+     /tmp/ccrWi8RQ.s:750    .bss.rt_heap:0000000000000000 $d
+     /tmp/ccrWi8RQ.s:756    .rti_fn.1:0000000000000000 $d
+
+UNDEFINED SYMBOLS
+HAL_UART_Init
+HAL_GPIO_WritePin
+HAL_GPIO_Init
+HAL_I2C_Init
+rt_strlen
+HAL_UART_Transmit
+HAL_I2C_Master_Transmit
+rt_kprintf
+HAL_Init
+SystemCoreClockUpdate
+rt_components_board_init
+rt_system_heap_init
+SystemCoreClock
+rt_interrupt_enter
+ARM GAS  /tmp/ccrWi8RQ.s 			page 22
+
+
+rt_tick_increase
+rt_interrupt_leave

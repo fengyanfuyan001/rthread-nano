@@ -1,0 +1,29 @@
+{
+  "configurations": [
+    {
+      "name": "ST-Link: rrthread-nano",
+      "cwd": "${workspaceFolder}/build",
+      "executable": "./rrthread-nano.elf",
+      "servertype": "stutil",
+      "request": "launch",
+      "type": "cortex-debug",
+      "device": "STM32F103C8",
+      "runToEntryPoint": "entry",
+      "interface": "swd",
+      "preLaunchTask": "rrthread-nano_debug",
+      "showDevDebugOutput": "raw"
+    },
+        
+    {
+      "name": "ST-Link: Attach rrthread-nano",
+      "cwd": "${workspaceFolder}/build",
+      "executable": "./rrthread-nano.elf",
+      "servertype": "stutil",
+      "request": "attach",
+      "type": "cortex-debug",
+      "device": "STM32F103C8",
+      "runToEntryPoint": "entry",
+      "interface": "swd"
+    },
+  ]
+}

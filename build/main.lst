@@ -1,0 +1,346 @@
+ARM GAS  /tmp/ccEKgtvY.s 			page 1
+
+
+   1              		.cpu cortex-m3
+   2              		.arch armv7-m
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"main.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.section	.text.thread2_entry,"ax",%progbits
+  18              		.align	1
+  19              		.syntax unified
+  20              		.thumb
+  21              		.thumb_func
+  23              	thread2_entry:
+  24              	.LFB81:
+  25              		.file 1 "Core/Src/main.c"
+   1:Core/Src/main.c **** /* USER CODE BEGIN Header */
+   2:Core/Src/main.c **** /**
+   3:Core/Src/main.c ****   ******************************************************************************
+   4:Core/Src/main.c ****   * @file           : main.c
+   5:Core/Src/main.c ****   * @brief          : Main program body
+   6:Core/Src/main.c ****   ******************************************************************************
+   7:Core/Src/main.c ****   * @attention
+   8:Core/Src/main.c ****   *
+   9:Core/Src/main.c ****   * Copyright (c) 2024 STMicroelectronics.
+  10:Core/Src/main.c ****   * All rights reserved.
+  11:Core/Src/main.c ****   *
+  12:Core/Src/main.c ****   * This software is licensed under terms that can be found in the LICENSE file
+  13:Core/Src/main.c ****   * in the root directory of this software component.
+  14:Core/Src/main.c ****   * If no LICENSE file comes with this software, it is provided AS-IS.
+  15:Core/Src/main.c ****   *
+  16:Core/Src/main.c ****   ******************************************************************************
+  17:Core/Src/main.c ****   */
+  18:Core/Src/main.c **** #include "main.h"
+  19:Core/Src/main.c **** #include <rtthread.h>
+  20:Core/Src/main.c **** 
+  21:Core/Src/main.c **** #define THREAD_PRIORITY         25
+  22:Core/Src/main.c **** #define THREAD_STACK_SIZE       512
+  23:Core/Src/main.c **** #define THREAD_TIMESLICE        5
+  24:Core/Src/main.c **** 
+  25:Core/Src/main.c **** extern void screen_setup(void);
+  26:Core/Src/main.c **** 
+  27:Core/Src/main.c **** static rt_thread_t tid1 = RT_NULL;
+  28:Core/Src/main.c **** static void thread1_entry(void *parameter) {
+  29:Core/Src/main.c ****   while (1){
+  30:Core/Src/main.c ****     screen_setup();
+  31:Core/Src/main.c ****   }
+  32:Core/Src/main.c **** }
+  33:Core/Src/main.c **** 
+ARM GAS  /tmp/ccEKgtvY.s 			page 2
+
+
+  34:Core/Src/main.c **** 
+  35:Core/Src/main.c **** ALIGN(RT_ALIGN_SIZE)
+  36:Core/Src/main.c **** static char thread2_stack[1024];
+  37:Core/Src/main.c **** static struct rt_thread thread2;
+  38:Core/Src/main.c **** 
+  39:Core/Src/main.c **** static void thread2_entry(void *param) {
+  26              		.loc 1 39 40 view -0
+  27              		.cfi_startproc
+  28              		@ Volatile: function does not return.
+  29              		@ args = 0, pretend = 0, frame = 0
+  30              		@ frame_needed = 0, uses_anonymous_args = 0
+  31              	.LVL0:
+  32              		.loc 1 39 40 is_stmt 0 view .LVU1
+  33 0000 08B5     		push	{r3, lr}
+  34              	.LCFI0:
+  35              		.cfi_def_cfa_offset 8
+  36              		.cfi_offset 3, -8
+  37              		.cfi_offset 14, -4
+  38              	.LVL1:
+  39              	.L2:
+  40:Core/Src/main.c ****   while(1) {
+  40              		.loc 1 40 3 is_stmt 1 discriminator 1 view .LVU2
+  41:Core/Src/main.c ****     HAL_GPIO_TogglePin(GPIOC,GPIO_PIN_13);
+  41              		.loc 1 41 5 discriminator 1 view .LVU3
+  42 0002 4FF40051 		mov	r1, #8192
+  43 0006 0448     		ldr	r0, .L4
+  44 0008 FFF7FEFF 		bl	HAL_GPIO_TogglePin
+  45              	.LVL2:
+  42:Core/Src/main.c ****     rt_thread_mdelay(500);
+  46              		.loc 1 42 5 discriminator 1 view .LVU4
+  47 000c 4FF4FA70 		mov	r0, #500
+  48 0010 FFF7FEFF 		bl	rt_thread_mdelay
+  49              	.LVL3:
+  40:Core/Src/main.c ****   while(1) {
+  50              		.loc 1 40 8 discriminator 1 view .LVU5
+  51 0014 F5E7     		b	.L2
+  52              	.L5:
+  53 0016 00BF     		.align	2
+  54              	.L4:
+  55 0018 00100140 		.word	1073811456
+  56              		.cfi_endproc
+  57              	.LFE81:
+  59              		.section	.text.thread1_entry,"ax",%progbits
+  60              		.align	1
+  61              		.syntax unified
+  62              		.thumb
+  63              		.thumb_func
+  65              	thread1_entry:
+  66              	.LFB80:
+  28:Core/Src/main.c ****   while (1){
+  67              		.loc 1 28 44 view -0
+  68              		.cfi_startproc
+  69              		@ Volatile: function does not return.
+  70              		@ args = 0, pretend = 0, frame = 0
+  71              		@ frame_needed = 0, uses_anonymous_args = 0
+  72              	.LVL4:
+  28:Core/Src/main.c ****   while (1){
+ARM GAS  /tmp/ccEKgtvY.s 			page 3
+
+
+  73              		.loc 1 28 44 is_stmt 0 view .LVU7
+  74 0000 08B5     		push	{r3, lr}
+  75              	.LCFI1:
+  76              		.cfi_def_cfa_offset 8
+  77              		.cfi_offset 3, -8
+  78              		.cfi_offset 14, -4
+  79              	.LVL5:
+  80              	.L7:
+  29:Core/Src/main.c ****     screen_setup();
+  81              		.loc 1 29 3 is_stmt 1 discriminator 1 view .LVU8
+  30:Core/Src/main.c ****   }
+  82              		.loc 1 30 5 discriminator 1 view .LVU9
+  83 0002 FFF7FEFF 		bl	screen_setup
+  84              	.LVL6:
+  29:Core/Src/main.c ****     screen_setup();
+  85              		.loc 1 29 9 discriminator 1 view .LVU10
+  86 0006 FCE7     		b	.L7
+  87              		.cfi_endproc
+  88              	.LFE80:
+  90              		.section	.rodata.main.str1.4,"aMS",%progbits,1
+  91              		.align	2
+  92              	.LC0:
+  93 0000 74687265 		.ascii	"thread1\000"
+  93      61643100 
+  94              		.align	2
+  95              	.LC1:
+  96 0008 74687265 		.ascii	"thread2\000"
+  96      61643200 
+  97              		.align	2
+  98              	.LC2:
+  99 0010 54686973 		.ascii	"This is the main thread!\012\000"
+  99      20697320 
+  99      74686520 
+  99      6D61696E 
+  99      20746872 
+ 100              		.section	.text.main,"ax",%progbits
+ 101              		.align	1
+ 102              		.global	main
+ 103              		.syntax unified
+ 104              		.thumb
+ 105              		.thumb_func
+ 107              	main:
+ 108              	.LFB82:
+  43:Core/Src/main.c ****   }
+  44:Core/Src/main.c **** } 
+  45:Core/Src/main.c **** 
+  46:Core/Src/main.c **** /**
+  47:Core/Src/main.c ****   * @brief  The application entry point.
+  48:Core/Src/main.c ****   * @retval int
+  49:Core/Src/main.c ****   */
+  50:Core/Src/main.c **** int main(void)
+  51:Core/Src/main.c **** {
+ 109              		.loc 1 51 1 view -0
+ 110              		.cfi_startproc
+ 111              		@ Volatile: function does not return.
+ 112              		@ args = 0, pretend = 0, frame = 0
+ 113              		@ frame_needed = 0, uses_anonymous_args = 0
+ARM GAS  /tmp/ccEKgtvY.s 			page 4
+
+
+ 114 0000 00B5     		push	{lr}
+ 115              	.LCFI2:
+ 116              		.cfi_def_cfa_offset 4
+ 117              		.cfi_offset 14, -4
+ 118 0002 85B0     		sub	sp, sp, #20
+ 119              	.LCFI3:
+ 120              		.cfi_def_cfa_offset 24
+  52:Core/Src/main.c **** 
+  53:Core/Src/main.c **** 
+  54:Core/Src/main.c ****   tid1 = rt_thread_create("thread1",
+ 121              		.loc 1 54 3 view .LVU12
+ 122              		.loc 1 54 10 is_stmt 0 view .LVU13
+ 123 0004 0523     		movs	r3, #5
+ 124 0006 0193     		str	r3, [sp, #4]
+ 125 0008 1923     		movs	r3, #25
+ 126 000a 0093     		str	r3, [sp]
+ 127 000c 4FF40073 		mov	r3, #512
+ 128 0010 0022     		movs	r2, #0
+ 129 0012 1249     		ldr	r1, .L13
+ 130 0014 1248     		ldr	r0, .L13+4
+ 131 0016 FFF7FEFF 		bl	rt_thread_create
+ 132              	.LVL7:
+ 133              		.loc 1 54 8 view .LVU14
+ 134 001a 124B     		ldr	r3, .L13+8
+ 135 001c 1860     		str	r0, [r3]
+  55:Core/Src/main.c ****                           thread1_entry, RT_NULL,
+  56:Core/Src/main.c ****                           THREAD_STACK_SIZE,
+  57:Core/Src/main.c ****                           THREAD_PRIORITY, THREAD_TIMESLICE);
+  58:Core/Src/main.c ****   if (tid1 != RT_NULL)
+ 136              		.loc 1 58 3 is_stmt 1 view .LVU15
+ 137              		.loc 1 58 6 is_stmt 0 view .LVU16
+ 138 001e 08B1     		cbz	r0, .L10
+  59:Core/Src/main.c ****       rt_thread_startup(tid1);
+ 139              		.loc 1 59 7 is_stmt 1 view .LVU17
+ 140 0020 FFF7FEFF 		bl	rt_thread_startup
+ 141              	.LVL8:
+ 142              	.L10:
+  60:Core/Src/main.c **** 
+  61:Core/Src/main.c ****   rt_thread_init(&thread2,
+ 143              		.loc 1 61 3 view .LVU18
+ 144 0024 104C     		ldr	r4, .L13+12
+ 145 0026 0523     		movs	r3, #5
+ 146 0028 0393     		str	r3, [sp, #12]
+ 147 002a 1823     		movs	r3, #24
+ 148 002c 0293     		str	r3, [sp, #8]
+ 149 002e 4FF48063 		mov	r3, #1024
+ 150 0032 0193     		str	r3, [sp, #4]
+ 151 0034 0D4B     		ldr	r3, .L13+16
+ 152 0036 0093     		str	r3, [sp]
+ 153 0038 0023     		movs	r3, #0
+ 154 003a 0D4A     		ldr	r2, .L13+20
+ 155 003c 0D49     		ldr	r1, .L13+24
+ 156 003e 2046     		mov	r0, r4
+ 157 0040 FFF7FEFF 		bl	rt_thread_init
+ 158              	.LVL9:
+  62:Core/Src/main.c ****                   "thread2",
+  63:Core/Src/main.c ****                   thread2_entry,
+ARM GAS  /tmp/ccEKgtvY.s 			page 5
+
+
+  64:Core/Src/main.c ****                   RT_NULL,
+  65:Core/Src/main.c ****                   &thread2_stack[0],
+  66:Core/Src/main.c ****                   sizeof(thread2_stack),
+  67:Core/Src/main.c ****                   THREAD_PRIORITY - 1, THREAD_TIMESLICE);
+  68:Core/Src/main.c ****   rt_thread_startup(&thread2);
+ 159              		.loc 1 68 3 view .LVU19
+ 160 0044 2046     		mov	r0, r4
+ 161 0046 FFF7FEFF 		bl	rt_thread_startup
+ 162              	.LVL10:
+ 163              	.L11:
+  69:Core/Src/main.c ****   
+  70:Core/Src/main.c ****   while (1)
+ 164              		.loc 1 70 3 discriminator 1 view .LVU20
+  71:Core/Src/main.c ****   {
+  72:Core/Src/main.c ****     rt_kprintf("This is the main thread!\n");
+ 165              		.loc 1 72 5 discriminator 1 view .LVU21
+ 166 004a 0B48     		ldr	r0, .L13+28
+ 167 004c FFF7FEFF 		bl	rt_kprintf
+ 168              	.LVL11:
+  73:Core/Src/main.c ****     rt_thread_mdelay(1000);
+ 169              		.loc 1 73 5 discriminator 1 view .LVU22
+ 170 0050 4FF47A70 		mov	r0, #1000
+ 171 0054 FFF7FEFF 		bl	rt_thread_mdelay
+ 172              	.LVL12:
+  70:Core/Src/main.c ****   {
+ 173              		.loc 1 70 9 discriminator 1 view .LVU23
+ 174 0058 F7E7     		b	.L11
+ 175              	.L14:
+ 176 005a 00BF     		.align	2
+ 177              	.L13:
+ 178 005c 00000000 		.word	thread1_entry
+ 179 0060 00000000 		.word	.LC0
+ 180 0064 00000000 		.word	.LANCHOR0
+ 181 0068 00000000 		.word	.LANCHOR1
+ 182 006c 00000000 		.word	.LANCHOR2
+ 183 0070 00000000 		.word	thread2_entry
+ 184 0074 08000000 		.word	.LC1
+ 185 0078 10000000 		.word	.LC2
+ 186              		.cfi_endproc
+ 187              	.LFE82:
+ 189              		.section	.bss.thread2,"aw",%nobits
+ 190              		.align	2
+ 191              		.set	.LANCHOR1,. + 0
+ 194              	thread2:
+ 195 0000 00000000 		.space	120
+ 195      00000000 
+ 195      00000000 
+ 195      00000000 
+ 195      00000000 
+ 196              		.section	.bss.thread2_stack,"aw",%nobits
+ 197              		.align	2
+ 198              		.set	.LANCHOR2,. + 0
+ 201              	thread2_stack:
+ 202 0000 00000000 		.space	1024
+ 202      00000000 
+ 202      00000000 
+ 202      00000000 
+ARM GAS  /tmp/ccEKgtvY.s 			page 6
+
+
+ 202      00000000 
+ 203              		.section	.bss.tid1,"aw",%nobits
+ 204              		.align	2
+ 205              		.set	.LANCHOR0,. + 0
+ 208              	tid1:
+ 209 0000 00000000 		.space	4
+ 210              		.text
+ 211              	.Letext0:
+ 212              		.file 2 "/opt/arm-none-eabi-tools/arm-none-eabi/include/machine/_default_types.h"
+ 213              		.file 3 "/opt/arm-none-eabi-tools/arm-none-eabi/include/sys/_stdint.h"
+ 214              		.file 4 "Drivers/CMSIS/Device/ST/STM32F1xx/Include/stm32f103xb.h"
+ 215              		.file 5 "rt_thread/include/rtdef.h"
+ 216              		.file 6 "rt_thread/include/rtthread.h"
+ 217              		.file 7 "Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_gpio.h"
+ARM GAS  /tmp/ccEKgtvY.s 			page 7
+
+
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 main.c
+     /tmp/ccEKgtvY.s:18     .text.thread2_entry:0000000000000000 $t
+     /tmp/ccEKgtvY.s:23     .text.thread2_entry:0000000000000000 thread2_entry
+     /tmp/ccEKgtvY.s:55     .text.thread2_entry:0000000000000018 $d
+     /tmp/ccEKgtvY.s:60     .text.thread1_entry:0000000000000000 $t
+     /tmp/ccEKgtvY.s:65     .text.thread1_entry:0000000000000000 thread1_entry
+     /tmp/ccEKgtvY.s:91     .rodata.main.str1.4:0000000000000000 $d
+     /tmp/ccEKgtvY.s:101    .text.main:0000000000000000 $t
+     /tmp/ccEKgtvY.s:107    .text.main:0000000000000000 main
+     /tmp/ccEKgtvY.s:178    .text.main:000000000000005c $d
+     /tmp/ccEKgtvY.s:190    .bss.thread2:0000000000000000 $d
+     /tmp/ccEKgtvY.s:194    .bss.thread2:0000000000000000 thread2
+     /tmp/ccEKgtvY.s:197    .bss.thread2_stack:0000000000000000 $d
+     /tmp/ccEKgtvY.s:201    .bss.thread2_stack:0000000000000000 thread2_stack
+     /tmp/ccEKgtvY.s:204    .bss.tid1:0000000000000000 $d
+     /tmp/ccEKgtvY.s:208    .bss.tid1:0000000000000000 tid1
+
+UNDEFINED SYMBOLS
+HAL_GPIO_TogglePin
+rt_thread_mdelay
+screen_setup
+rt_thread_create
+rt_thread_startup
+rt_thread_init
+rt_kprintf

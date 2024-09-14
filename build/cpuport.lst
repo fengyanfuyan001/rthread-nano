@@ -1,0 +1,971 @@
+ARM GAS  /tmp/ccnouRA5.s 			page 1
+
+
+   1              		.cpu cortex-m3
+   2              		.arch armv7-m
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"cpuport.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.section	.text.rt_hw_stack_init,"ax",%progbits
+  18              		.align	1
+  19              		.global	rt_hw_stack_init
+  20              		.syntax unified
+  21              		.thumb
+  22              		.thumb_func
+  24              	rt_hw_stack_init:
+  25              	.LVL0:
+  26              	.LFB15:
+  27              		.file 1 "rt_thread/libcpu/arm/cortex-m3/cpuport.c"
+   1:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** /*
+   2:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****  * Copyright (c) 2006-2021, RT-Thread Development Team
+   3:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****  *
+   4:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****  * SPDX-License-Identifier: Apache-2.0
+   5:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****  *
+   6:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****  * Change Logs:
+   7:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****  * Date         Author      Notes
+   8:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****  * 2009-01-05   Bernard     first version
+   9:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****  * 2011-02-14   onelife     Modify for EFM32
+  10:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****  * 2011-06-17   onelife     Merge all of the C source code into cpuport.c
+  11:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****  * 2012-12-23   aozima      stack addr align to 8byte.
+  12:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****  * 2012-12-29   Bernard     Add exception hook.
+  13:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****  * 2013-07-09   aozima      enhancement hard fault exception handler.
+  14:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****  * 2019-07-03   yangjie     add __rt_ffs() for armclang.
+  15:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****  */
+  16:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+  17:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** #include <rtthread.h>
+  18:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+  19:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** struct exception_stack_frame
+  20:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** {
+  21:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_uint32_t r0;
+  22:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_uint32_t r1;
+  23:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_uint32_t r2;
+  24:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_uint32_t r3;
+  25:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_uint32_t r12;
+  26:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_uint32_t lr;
+  27:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_uint32_t pc;
+  28:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_uint32_t psr;
+  29:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** };
+  30:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+  31:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** struct stack_frame
+ARM GAS  /tmp/ccnouRA5.s 			page 2
+
+
+  32:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** {
+  33:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     /* r4 ~ r11 register */
+  34:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_uint32_t r4;
+  35:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_uint32_t r5;
+  36:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_uint32_t r6;
+  37:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_uint32_t r7;
+  38:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_uint32_t r8;
+  39:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_uint32_t r9;
+  40:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_uint32_t r10;
+  41:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_uint32_t r11;
+  42:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+  43:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     struct exception_stack_frame exception_stack_frame;
+  44:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** };
+  45:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+  46:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** /* flag in interrupt handling */
+  47:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** rt_uint32_t rt_interrupt_from_thread, rt_interrupt_to_thread;
+  48:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** rt_uint32_t rt_thread_switch_interrupt_flag;
+  49:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** /* exception hook */
+  50:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** static rt_err_t (*rt_exception_hook)(void *context) = RT_NULL;
+  51:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+  52:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** /**
+  53:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****  * This function will initialize thread stack
+  54:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****  *
+  55:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****  * @param tentry the entry of thread
+  56:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****  * @param parameter the parameter of entry
+  57:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****  * @param stack_addr the beginning stack address
+  58:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****  * @param texit the function will be called when thread exit
+  59:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****  *
+  60:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****  * @return stack address
+  61:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****  */
+  62:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** rt_uint8_t *rt_hw_stack_init(void       *tentry,
+  63:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****                              void       *parameter,
+  64:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****                              rt_uint8_t *stack_addr,
+  65:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****                              void       *texit)
+  66:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** {
+  28              		.loc 1 66 1 view -0
+  29              		.cfi_startproc
+  30              		@ args = 0, pretend = 0, frame = 0
+  31              		@ frame_needed = 0, uses_anonymous_args = 0
+  32              		@ link register save eliminated.
+  33              		.loc 1 66 1 is_stmt 0 view .LVU1
+  34 0000 30B4     		push	{r4, r5}
+  35              	.LCFI0:
+  36              		.cfi_def_cfa_offset 8
+  37              		.cfi_offset 4, -8
+  38              		.cfi_offset 5, -4
+  39 0002 0546     		mov	r5, r0
+  67:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     struct stack_frame *stack_frame;
+  40              		.loc 1 67 5 is_stmt 1 view .LVU2
+  68:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_uint8_t         *stk;
+  41              		.loc 1 68 5 view .LVU3
+  69:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     unsigned long       i;
+  42              		.loc 1 69 5 view .LVU4
+  70:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+  71:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     stk  = stack_addr + sizeof(rt_uint32_t);
+  43              		.loc 1 71 5 view .LVU5
+  44              		.loc 1 71 10 is_stmt 0 view .LVU6
+ARM GAS  /tmp/ccnouRA5.s 			page 3
+
+
+  45 0004 0432     		adds	r2, r2, #4
+  46              	.LVL1:
+  72:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     stk  = (rt_uint8_t *)RT_ALIGN_DOWN((rt_uint32_t)stk, 8);
+  47              		.loc 1 72 5 is_stmt 1 view .LVU7
+  48              		.loc 1 72 26 is_stmt 0 view .LVU8
+  49 0006 22F0070C 		bic	ip, r2, #7
+  50              	.LVL2:
+  73:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     stk -= sizeof(struct stack_frame);
+  51              		.loc 1 73 5 is_stmt 1 view .LVU9
+  52              		.loc 1 73 9 is_stmt 0 view .LVU10
+  53 000a ACF14000 		sub	r0, ip, #64
+  54              	.LVL3:
+  74:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+  75:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     stack_frame = (struct stack_frame *)stk;
+  55              		.loc 1 75 5 is_stmt 1 view .LVU11
+  76:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+  77:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     /* init all register */
+  78:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     for (i = 0; i < sizeof(struct stack_frame) / sizeof(rt_uint32_t); i ++)
+  56              		.loc 1 78 5 view .LVU12
+  57              		.loc 1 78 12 is_stmt 0 view .LVU13
+  58 000e 0022     		movs	r2, #0
+  59              	.LVL4:
+  60              		.loc 1 78 5 view .LVU14
+  61 0010 03E0     		b	.L2
+  62              	.LVL5:
+  63              	.L3:
+  79:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     {
+  80:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         ((rt_uint32_t *)stack_frame)[i] = 0xdeadbeef;
+  64              		.loc 1 80 9 is_stmt 1 discriminator 3 view .LVU15
+  65              		.loc 1 80 41 is_stmt 0 discriminator 3 view .LVU16
+  66 0012 0D4C     		ldr	r4, .L5
+  67 0014 40F82240 		str	r4, [r0, r2, lsl #2]
+  78:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     {
+  68              		.loc 1 78 71 is_stmt 1 discriminator 3 view .LVU17
+  78:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     {
+  69              		.loc 1 78 73 is_stmt 0 discriminator 3 view .LVU18
+  70 0018 0132     		adds	r2, r2, #1
+  71              	.LVL6:
+  72              	.L2:
+  78:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     {
+  73              		.loc 1 78 17 is_stmt 1 discriminator 1 view .LVU19
+  78:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     {
+  74              		.loc 1 78 5 is_stmt 0 discriminator 1 view .LVU20
+  75 001a 0F2A     		cmp	r2, #15
+  76 001c F9D9     		bls	.L3
+  81:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     }
+  82:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+  83:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     stack_frame->exception_stack_frame.r0  = (unsigned long)parameter; /* r0 : argument */
+  77              		.loc 1 83 5 is_stmt 1 view .LVU21
+  78              		.loc 1 83 44 is_stmt 0 view .LVU22
+  79 001e 4CF8201C 		str	r1, [ip, #-32]
+  84:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     stack_frame->exception_stack_frame.r1  = 0;                        /* r1 */
+  80              		.loc 1 84 5 is_stmt 1 view .LVU23
+  81              		.loc 1 84 44 is_stmt 0 view .LVU24
+  82 0022 0022     		movs	r2, #0
+  83              	.LVL7:
+  84              		.loc 1 84 44 view .LVU25
+ARM GAS  /tmp/ccnouRA5.s 			page 4
+
+
+  85 0024 4CF81C2C 		str	r2, [ip, #-28]
+  85:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     stack_frame->exception_stack_frame.r2  = 0;                        /* r2 */
+  86              		.loc 1 85 5 is_stmt 1 view .LVU26
+  87              		.loc 1 85 44 is_stmt 0 view .LVU27
+  88 0028 4CF8182C 		str	r2, [ip, #-24]
+  86:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     stack_frame->exception_stack_frame.r3  = 0;                        /* r3 */
+  89              		.loc 1 86 5 is_stmt 1 view .LVU28
+  90              		.loc 1 86 44 is_stmt 0 view .LVU29
+  91 002c 4CF8142C 		str	r2, [ip, #-20]
+  87:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     stack_frame->exception_stack_frame.r12 = 0;                        /* r12 */
+  92              		.loc 1 87 5 is_stmt 1 view .LVU30
+  93              		.loc 1 87 44 is_stmt 0 view .LVU31
+  94 0030 4CF8102C 		str	r2, [ip, #-16]
+  88:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     stack_frame->exception_stack_frame.lr  = (unsigned long)texit;     /* lr */
+  95              		.loc 1 88 5 is_stmt 1 view .LVU32
+  96              		.loc 1 88 44 is_stmt 0 view .LVU33
+  97 0034 4CF80C3C 		str	r3, [ip, #-12]
+  89:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     stack_frame->exception_stack_frame.pc  = (unsigned long)tentry;    /* entry point, pc */
+  98              		.loc 1 89 5 is_stmt 1 view .LVU34
+  99              		.loc 1 89 44 is_stmt 0 view .LVU35
+ 100 0038 4CF8085C 		str	r5, [ip, #-8]
+  90:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     stack_frame->exception_stack_frame.psr = 0x01000000L;              /* PSR */
+ 101              		.loc 1 90 5 is_stmt 1 view .LVU36
+ 102              		.loc 1 90 44 is_stmt 0 view .LVU37
+ 103 003c 4FF08073 		mov	r3, #16777216
+ 104              	.LVL8:
+ 105              		.loc 1 90 44 view .LVU38
+ 106 0040 4CF8043C 		str	r3, [ip, #-4]
+  91:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+  92:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     /* return task's current stack address */
+  93:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     return stk;
+ 107              		.loc 1 93 5 is_stmt 1 view .LVU39
+  94:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** }
+ 108              		.loc 1 94 1 is_stmt 0 view .LVU40
+ 109 0044 30BC     		pop	{r4, r5}
+ 110              	.LCFI1:
+ 111              		.cfi_restore 5
+ 112              		.cfi_restore 4
+ 113              		.cfi_def_cfa_offset 0
+ 114              	.LVL9:
+ 115              		.loc 1 94 1 view .LVU41
+ 116 0046 7047     		bx	lr
+ 117              	.L6:
+ 118              		.align	2
+ 119              	.L5:
+ 120 0048 EFBEADDE 		.word	-559038737
+ 121              		.cfi_endproc
+ 122              	.LFE15:
+ 124              		.section	.text.rt_hw_exception_install,"ax",%progbits
+ 125              		.align	1
+ 126              		.global	rt_hw_exception_install
+ 127              		.syntax unified
+ 128              		.thumb
+ 129              		.thumb_func
+ 131              	rt_hw_exception_install:
+ 132              	.LVL10:
+ 133              	.LFB16:
+ARM GAS  /tmp/ccnouRA5.s 			page 5
+
+
+  95:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+  96:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** /**
+  97:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****  * This function set the hook, which is invoked on fault exception handling.
+  98:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****  *
+  99:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****  * @param exception_handle the exception handling hook function.
+ 100:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****  */
+ 101:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** void rt_hw_exception_install(rt_err_t (*exception_handle)(void* context))
+ 102:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** {
+ 134              		.loc 1 102 1 is_stmt 1 view -0
+ 135              		.cfi_startproc
+ 136              		@ args = 0, pretend = 0, frame = 0
+ 137              		@ frame_needed = 0, uses_anonymous_args = 0
+ 138              		@ link register save eliminated.
+ 103:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_exception_hook = exception_handle;
+ 139              		.loc 1 103 5 view .LVU43
+ 140              		.loc 1 103 23 is_stmt 0 view .LVU44
+ 141 0000 014B     		ldr	r3, .L8
+ 142 0002 1860     		str	r0, [r3]
+ 104:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** }
+ 143              		.loc 1 104 1 view .LVU45
+ 144 0004 7047     		bx	lr
+ 145              	.L9:
+ 146 0006 00BF     		.align	2
+ 147              	.L8:
+ 148 0008 00000000 		.word	.LANCHOR0
+ 149              		.cfi_endproc
+ 150              	.LFE16:
+ 152              		.section	.rodata.rt_hw_hard_fault_exception.str1.4,"aMS",%progbits,1
+ 153              		.align	2
+ 154              	.LC0:
+ 155 0000 7073723A 		.ascii	"psr: 0x%08x\012\000"
+ 155      20307825 
+ 155      3038780A 
+ 155      00
+ 156 000d 000000   		.align	2
+ 157              	.LC1:
+ 158 0010 7230303A 		.ascii	"r00: 0x%08x\012\000"
+ 158      20307825 
+ 158      3038780A 
+ 158      00
+ 159 001d 000000   		.align	2
+ 160              	.LC2:
+ 161 0020 7230313A 		.ascii	"r01: 0x%08x\012\000"
+ 161      20307825 
+ 161      3038780A 
+ 161      00
+ 162 002d 000000   		.align	2
+ 163              	.LC3:
+ 164 0030 7230323A 		.ascii	"r02: 0x%08x\012\000"
+ 164      20307825 
+ 164      3038780A 
+ 164      00
+ 165 003d 000000   		.align	2
+ 166              	.LC4:
+ 167 0040 7230333A 		.ascii	"r03: 0x%08x\012\000"
+ 167      20307825 
+ 167      3038780A 
+ARM GAS  /tmp/ccnouRA5.s 			page 6
+
+
+ 167      00
+ 168 004d 000000   		.align	2
+ 169              	.LC5:
+ 170 0050 7230343A 		.ascii	"r04: 0x%08x\012\000"
+ 170      20307825 
+ 170      3038780A 
+ 170      00
+ 171 005d 000000   		.align	2
+ 172              	.LC6:
+ 173 0060 7230353A 		.ascii	"r05: 0x%08x\012\000"
+ 173      20307825 
+ 173      3038780A 
+ 173      00
+ 174 006d 000000   		.align	2
+ 175              	.LC7:
+ 176 0070 7230363A 		.ascii	"r06: 0x%08x\012\000"
+ 176      20307825 
+ 176      3038780A 
+ 176      00
+ 177 007d 000000   		.align	2
+ 178              	.LC8:
+ 179 0080 7230373A 		.ascii	"r07: 0x%08x\012\000"
+ 179      20307825 
+ 179      3038780A 
+ 179      00
+ 180 008d 000000   		.align	2
+ 181              	.LC9:
+ 182 0090 7230383A 		.ascii	"r08: 0x%08x\012\000"
+ 182      20307825 
+ 182      3038780A 
+ 182      00
+ 183 009d 000000   		.align	2
+ 184              	.LC10:
+ 185 00a0 7230393A 		.ascii	"r09: 0x%08x\012\000"
+ 185      20307825 
+ 185      3038780A 
+ 185      00
+ 186 00ad 000000   		.align	2
+ 187              	.LC11:
+ 188 00b0 7231303A 		.ascii	"r10: 0x%08x\012\000"
+ 188      20307825 
+ 188      3038780A 
+ 188      00
+ 189 00bd 000000   		.align	2
+ 190              	.LC12:
+ 191 00c0 7231313A 		.ascii	"r11: 0x%08x\012\000"
+ 191      20307825 
+ 191      3038780A 
+ 191      00
+ 192 00cd 000000   		.align	2
+ 193              	.LC13:
+ 194 00d0 7231323A 		.ascii	"r12: 0x%08x\012\000"
+ 194      20307825 
+ 194      3038780A 
+ 194      00
+ 195 00dd 000000   		.align	2
+ 196              	.LC14:
+ARM GAS  /tmp/ccnouRA5.s 			page 7
+
+
+ 197 00e0 206C723A 		.ascii	" lr: 0x%08x\012\000"
+ 197      20307825 
+ 197      3038780A 
+ 197      00
+ 198 00ed 000000   		.align	2
+ 199              	.LC15:
+ 200 00f0 2070633A 		.ascii	" pc: 0x%08x\012\000"
+ 200      20307825 
+ 200      3038780A 
+ 200      00
+ 201 00fd 000000   		.align	2
+ 202              	.LC16:
+ 203 0100 68617264 		.ascii	"hard fault on thread: %s\015\012\015\012\000"
+ 203      20666175 
+ 203      6C74206F 
+ 203      6E207468 
+ 203      72656164 
+ 204 011d 000000   		.align	2
+ 205              	.LC17:
+ 206 0120 68617264 		.ascii	"hard fault on handler\015\012\015\012\000"
+ 206      20666175 
+ 206      6C74206F 
+ 206      6E206861 
+ 206      6E646C65 
+ 207              		.section	.text.rt_hw_hard_fault_exception,"ax",%progbits
+ 208              		.align	1
+ 209              		.global	rt_hw_hard_fault_exception
+ 210              		.syntax unified
+ 211              		.thumb
+ 212              		.thumb_func
+ 214              	rt_hw_hard_fault_exception:
+ 215              	.LVL11:
+ 216              	.LFB17:
+ 105:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 106:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** #define SCB_CFSR        (*(volatile const unsigned *)0xE000ED28) /* Configurable Fault Status Regis
+ 107:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** #define SCB_HFSR        (*(volatile const unsigned *)0xE000ED2C) /* HardFault Status Register */
+ 108:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** #define SCB_MMAR        (*(volatile const unsigned *)0xE000ED34) /* MemManage Fault Address registe
+ 109:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** #define SCB_BFAR        (*(volatile const unsigned *)0xE000ED38) /* Bus Fault Address Register */
+ 110:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** #define SCB_AIRCR       (*(volatile unsigned long *)0xE000ED0C)  /* Reset control Address Register 
+ 111:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** #define SCB_RESET_VALUE 0x05FA0004                               /* Reset value, write to SCB_AIRCR
+ 112:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 113:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** #define SCB_CFSR_MFSR   (*(volatile const unsigned char*)0xE000ED28)  /* Memory-management Fault St
+ 114:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** #define SCB_CFSR_BFSR   (*(volatile const unsigned char*)0xE000ED29)  /* Bus Fault Status Register 
+ 115:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** #define SCB_CFSR_UFSR   (*(volatile const unsigned short*)0xE000ED2A) /* Usage Fault Status Registe
+ 116:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 117:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** #ifdef RT_USING_FINSH
+ 118:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** static void usage_fault_track(void)
+ 119:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** {
+ 120:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_kprintf("usage fault:\n");
+ 121:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_kprintf("SCB_CFSR_UFSR:0x%02X ", SCB_CFSR_UFSR);
+ 122:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 123:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     if(SCB_CFSR_UFSR & (1<<0))
+ 124:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     {
+ 125:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         /* [0]:UNDEFINSTR */
+ 126:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         rt_kprintf("UNDEFINSTR ");
+ 127:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     }
+ 128:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ARM GAS  /tmp/ccnouRA5.s 			page 8
+
+
+ 129:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     if(SCB_CFSR_UFSR & (1<<1))
+ 130:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     {
+ 131:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         /* [1]:INVSTATE */
+ 132:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         rt_kprintf("INVSTATE ");
+ 133:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     }
+ 134:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 135:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     if(SCB_CFSR_UFSR & (1<<2))
+ 136:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     {
+ 137:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         /* [2]:INVPC */
+ 138:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         rt_kprintf("INVPC ");
+ 139:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     }
+ 140:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 141:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     if(SCB_CFSR_UFSR & (1<<3))
+ 142:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     {
+ 143:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         /* [3]:NOCP */
+ 144:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         rt_kprintf("NOCP ");
+ 145:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     }
+ 146:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 147:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     if(SCB_CFSR_UFSR & (1<<8))
+ 148:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     {
+ 149:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         /* [8]:UNALIGNED */
+ 150:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         rt_kprintf("UNALIGNED ");
+ 151:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     }
+ 152:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 153:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     if(SCB_CFSR_UFSR & (1<<9))
+ 154:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     {
+ 155:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         /* [9]:DIVBYZERO */
+ 156:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         rt_kprintf("DIVBYZERO ");
+ 157:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     }
+ 158:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 159:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_kprintf("\n");
+ 160:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** }
+ 161:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 162:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** static void bus_fault_track(void)
+ 163:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** {
+ 164:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_kprintf("bus fault:\n");
+ 165:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_kprintf("SCB_CFSR_BFSR:0x%02X ", SCB_CFSR_BFSR);
+ 166:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 167:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     if(SCB_CFSR_BFSR & (1<<0))
+ 168:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     {
+ 169:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         /* [0]:IBUSERR */
+ 170:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         rt_kprintf("IBUSERR ");
+ 171:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     }
+ 172:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 173:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     if(SCB_CFSR_BFSR & (1<<1))
+ 174:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     {
+ 175:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         /* [1]:PRECISERR */
+ 176:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         rt_kprintf("PRECISERR ");
+ 177:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     }
+ 178:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 179:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     if(SCB_CFSR_BFSR & (1<<2))
+ 180:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     {
+ 181:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         /* [2]:IMPRECISERR */
+ 182:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         rt_kprintf("IMPRECISERR ");
+ 183:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     }
+ 184:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 185:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     if(SCB_CFSR_BFSR & (1<<3))
+ARM GAS  /tmp/ccnouRA5.s 			page 9
+
+
+ 186:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     {
+ 187:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         /* [3]:UNSTKERR */
+ 188:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         rt_kprintf("UNSTKERR ");
+ 189:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     }
+ 190:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 191:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     if(SCB_CFSR_BFSR & (1<<4))
+ 192:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     {
+ 193:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         /* [4]:STKERR */
+ 194:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         rt_kprintf("STKERR ");
+ 195:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     }
+ 196:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 197:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     if(SCB_CFSR_BFSR & (1<<7))
+ 198:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     {
+ 199:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         rt_kprintf("SCB->BFAR:%08X\n", SCB_BFAR);
+ 200:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     }
+ 201:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     else
+ 202:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     {
+ 203:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         rt_kprintf("\n");
+ 204:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     }
+ 205:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** }
+ 206:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 207:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** static void mem_manage_fault_track(void)
+ 208:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** {
+ 209:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_kprintf("mem manage fault:\n");
+ 210:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_kprintf("SCB_CFSR_MFSR:0x%02X ", SCB_CFSR_MFSR);
+ 211:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 212:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     if(SCB_CFSR_MFSR & (1<<0))
+ 213:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     {
+ 214:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         /* [0]:IACCVIOL */
+ 215:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         rt_kprintf("IACCVIOL ");
+ 216:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     }
+ 217:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 218:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     if(SCB_CFSR_MFSR & (1<<1))
+ 219:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     {
+ 220:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         /* [1]:DACCVIOL */
+ 221:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         rt_kprintf("DACCVIOL ");
+ 222:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     }
+ 223:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 224:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     if(SCB_CFSR_MFSR & (1<<3))
+ 225:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     {
+ 226:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         /* [3]:MUNSTKERR */
+ 227:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         rt_kprintf("MUNSTKERR ");
+ 228:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     }
+ 229:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 230:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     if(SCB_CFSR_MFSR & (1<<4))
+ 231:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     {
+ 232:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         /* [4]:MSTKERR */
+ 233:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         rt_kprintf("MSTKERR ");
+ 234:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     }
+ 235:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 236:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     if(SCB_CFSR_MFSR & (1<<7))
+ 237:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     {
+ 238:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         /* [7]:MMARVALID */
+ 239:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         rt_kprintf("SCB->MMAR:%08X\n", SCB_MMAR);
+ 240:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     }
+ 241:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     else
+ 242:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     {
+ARM GAS  /tmp/ccnouRA5.s 			page 10
+
+
+ 243:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         rt_kprintf("\n");
+ 244:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     }
+ 245:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** }
+ 246:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 247:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** static void hard_fault_track(void)
+ 248:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** {
+ 249:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     if(SCB_HFSR & (1UL<<1))
+ 250:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     {
+ 251:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         /* [1]:VECTBL, Indicates hard fault is caused by failed vector fetch. */
+ 252:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         rt_kprintf("failed vector fetch\n");
+ 253:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     }
+ 254:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 255:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     if(SCB_HFSR & (1UL<<30))
+ 256:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     {
+ 257:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         /* [30]:FORCED, Indicates hard fault is taken because of bus fault,
+ 258:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****                         memory management fault, or usage fault. */
+ 259:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         if(SCB_CFSR_BFSR)
+ 260:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         {
+ 261:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****             bus_fault_track();
+ 262:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         }
+ 263:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 264:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         if(SCB_CFSR_MFSR)
+ 265:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         {
+ 266:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****             mem_manage_fault_track();
+ 267:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         }
+ 268:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 269:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         if(SCB_CFSR_UFSR)
+ 270:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         {
+ 271:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****             usage_fault_track();
+ 272:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         }
+ 273:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     }
+ 274:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 275:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     if(SCB_HFSR & (1UL<<31))
+ 276:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     {
+ 277:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         /* [31]:DEBUGEVT, Indicates hard fault is triggered by debug event. */
+ 278:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         rt_kprintf("debug event\n");
+ 279:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     }
+ 280:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** }
+ 281:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** #endif /* RT_USING_FINSH */
+ 282:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 283:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** struct exception_info
+ 284:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** {
+ 285:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_uint32_t exc_return;
+ 286:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     struct stack_frame stack_frame;
+ 287:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** };
+ 288:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 289:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** /*
+ 290:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****  * fault exception handler
+ 291:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****  */
+ 292:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** void rt_hw_hard_fault_exception(struct exception_info * exception_info)
+ 293:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** {
+ 217              		.loc 1 293 1 is_stmt 1 view -0
+ 218              		.cfi_startproc
+ 219              		@ args = 0, pretend = 0, frame = 0
+ 220              		@ frame_needed = 0, uses_anonymous_args = 0
+ 221              		.loc 1 293 1 is_stmt 0 view .LVU47
+ 222 0000 10B5     		push	{r4, lr}
+ARM GAS  /tmp/ccnouRA5.s 			page 11
+
+
+ 223              	.LCFI2:
+ 224              		.cfi_def_cfa_offset 8
+ 225              		.cfi_offset 4, -8
+ 226              		.cfi_offset 14, -4
+ 227 0002 0446     		mov	r4, r0
+ 294:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     extern long list_thread(void);
+ 228              		.loc 1 294 5 is_stmt 1 view .LVU48
+ 295:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     struct stack_frame* context = &exception_info->stack_frame;
+ 229              		.loc 1 295 5 view .LVU49
+ 230              	.LVL12:
+ 296:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 297:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     if (rt_exception_hook != RT_NULL)
+ 231              		.loc 1 297 5 view .LVU50
+ 232              		.loc 1 297 27 is_stmt 0 view .LVU51
+ 233 0004 2A4B     		ldr	r3, .L16
+ 234 0006 1B68     		ldr	r3, [r3]
+ 235              		.loc 1 297 8 view .LVU52
+ 236 0008 13B1     		cbz	r3, .L11
+ 237              	.LBB2:
+ 298:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     {
+ 299:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         rt_err_t result;
+ 238              		.loc 1 299 9 is_stmt 1 view .LVU53
+ 300:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 301:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         result = rt_exception_hook(exception_info);
+ 239              		.loc 1 301 9 view .LVU54
+ 240              		.loc 1 301 18 is_stmt 0 view .LVU55
+ 241 000a 9847     		blx	r3
+ 242              	.LVL13:
+ 302:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         if (result == RT_EOK)
+ 243              		.loc 1 302 9 is_stmt 1 view .LVU56
+ 244              		.loc 1 302 12 is_stmt 0 view .LVU57
+ 245 000c 0028     		cmp	r0, #0
+ 246 000e 4ED0     		beq	.L14
+ 247              	.LVL14:
+ 248              	.L11:
+ 249              		.loc 1 302 12 view .LVU58
+ 250              	.LBE2:
+ 303:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****             return;
+ 304:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     }
+ 305:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 306:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_kprintf("psr: 0x%08x\n", context->exception_stack_frame.psr);
+ 251              		.loc 1 306 5 is_stmt 1 view .LVU59
+ 252 0010 216C     		ldr	r1, [r4, #64]
+ 253 0012 2848     		ldr	r0, .L16+4
+ 254 0014 FFF7FEFF 		bl	rt_kprintf
+ 255              	.LVL15:
+ 307:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 308:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_kprintf("r00: 0x%08x\n", context->exception_stack_frame.r0);
+ 256              		.loc 1 308 5 view .LVU60
+ 257 0018 616A     		ldr	r1, [r4, #36]
+ 258 001a 2748     		ldr	r0, .L16+8
+ 259 001c FFF7FEFF 		bl	rt_kprintf
+ 260              	.LVL16:
+ 309:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_kprintf("r01: 0x%08x\n", context->exception_stack_frame.r1);
+ 261              		.loc 1 309 5 view .LVU61
+ 262 0020 A16A     		ldr	r1, [r4, #40]
+ 263 0022 2648     		ldr	r0, .L16+12
+ARM GAS  /tmp/ccnouRA5.s 			page 12
+
+
+ 264 0024 FFF7FEFF 		bl	rt_kprintf
+ 265              	.LVL17:
+ 310:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_kprintf("r02: 0x%08x\n", context->exception_stack_frame.r2);
+ 266              		.loc 1 310 5 view .LVU62
+ 267 0028 E16A     		ldr	r1, [r4, #44]
+ 268 002a 2548     		ldr	r0, .L16+16
+ 269 002c FFF7FEFF 		bl	rt_kprintf
+ 270              	.LVL18:
+ 311:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_kprintf("r03: 0x%08x\n", context->exception_stack_frame.r3);
+ 271              		.loc 1 311 5 view .LVU63
+ 272 0030 216B     		ldr	r1, [r4, #48]
+ 273 0032 2448     		ldr	r0, .L16+20
+ 274 0034 FFF7FEFF 		bl	rt_kprintf
+ 275              	.LVL19:
+ 312:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_kprintf("r04: 0x%08x\n", context->r4);
+ 276              		.loc 1 312 5 view .LVU64
+ 277 0038 6168     		ldr	r1, [r4, #4]
+ 278 003a 2348     		ldr	r0, .L16+24
+ 279 003c FFF7FEFF 		bl	rt_kprintf
+ 280              	.LVL20:
+ 313:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_kprintf("r05: 0x%08x\n", context->r5);
+ 281              		.loc 1 313 5 view .LVU65
+ 282 0040 A168     		ldr	r1, [r4, #8]
+ 283 0042 2248     		ldr	r0, .L16+28
+ 284 0044 FFF7FEFF 		bl	rt_kprintf
+ 285              	.LVL21:
+ 314:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_kprintf("r06: 0x%08x\n", context->r6);
+ 286              		.loc 1 314 5 view .LVU66
+ 287 0048 E168     		ldr	r1, [r4, #12]
+ 288 004a 2148     		ldr	r0, .L16+32
+ 289 004c FFF7FEFF 		bl	rt_kprintf
+ 290              	.LVL22:
+ 315:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_kprintf("r07: 0x%08x\n", context->r7);
+ 291              		.loc 1 315 5 view .LVU67
+ 292 0050 2169     		ldr	r1, [r4, #16]
+ 293 0052 2048     		ldr	r0, .L16+36
+ 294 0054 FFF7FEFF 		bl	rt_kprintf
+ 295              	.LVL23:
+ 316:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_kprintf("r08: 0x%08x\n", context->r8);
+ 296              		.loc 1 316 5 view .LVU68
+ 297 0058 6169     		ldr	r1, [r4, #20]
+ 298 005a 1F48     		ldr	r0, .L16+40
+ 299 005c FFF7FEFF 		bl	rt_kprintf
+ 300              	.LVL24:
+ 317:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_kprintf("r09: 0x%08x\n", context->r9);
+ 301              		.loc 1 317 5 view .LVU69
+ 302 0060 A169     		ldr	r1, [r4, #24]
+ 303 0062 1E48     		ldr	r0, .L16+44
+ 304 0064 FFF7FEFF 		bl	rt_kprintf
+ 305              	.LVL25:
+ 318:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_kprintf("r10: 0x%08x\n", context->r10);
+ 306              		.loc 1 318 5 view .LVU70
+ 307 0068 E169     		ldr	r1, [r4, #28]
+ 308 006a 1D48     		ldr	r0, .L16+48
+ 309 006c FFF7FEFF 		bl	rt_kprintf
+ 310              	.LVL26:
+ 319:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_kprintf("r11: 0x%08x\n", context->r11);
+ARM GAS  /tmp/ccnouRA5.s 			page 13
+
+
+ 311              		.loc 1 319 5 view .LVU71
+ 312 0070 216A     		ldr	r1, [r4, #32]
+ 313 0072 1C48     		ldr	r0, .L16+52
+ 314 0074 FFF7FEFF 		bl	rt_kprintf
+ 315              	.LVL27:
+ 320:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_kprintf("r12: 0x%08x\n", context->exception_stack_frame.r12);
+ 316              		.loc 1 320 5 view .LVU72
+ 317 0078 616B     		ldr	r1, [r4, #52]
+ 318 007a 1B48     		ldr	r0, .L16+56
+ 319 007c FFF7FEFF 		bl	rt_kprintf
+ 320              	.LVL28:
+ 321:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_kprintf(" lr: 0x%08x\n", context->exception_stack_frame.lr);
+ 321              		.loc 1 321 5 view .LVU73
+ 322 0080 A16B     		ldr	r1, [r4, #56]
+ 323 0082 1A48     		ldr	r0, .L16+60
+ 324 0084 FFF7FEFF 		bl	rt_kprintf
+ 325              	.LVL29:
+ 322:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_kprintf(" pc: 0x%08x\n", context->exception_stack_frame.pc);
+ 326              		.loc 1 322 5 view .LVU74
+ 327 0088 E16B     		ldr	r1, [r4, #60]
+ 328 008a 1948     		ldr	r0, .L16+64
+ 329 008c FFF7FEFF 		bl	rt_kprintf
+ 330              	.LVL30:
+ 323:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 324:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     if(exception_info->exc_return & (1 << 2) )
+ 331              		.loc 1 324 5 view .LVU75
+ 332              		.loc 1 324 22 is_stmt 0 view .LVU76
+ 333 0090 2368     		ldr	r3, [r4]
+ 334              		.loc 1 324 7 view .LVU77
+ 335 0092 13F0040F 		tst	r3, #4
+ 336 0096 06D0     		beq	.L12
+ 325:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     {
+ 326:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         rt_kprintf("hard fault on thread: %s\r\n\r\n", rt_thread_self()->name);
+ 337              		.loc 1 326 9 is_stmt 1 view .LVU78
+ 338              		.loc 1 326 56 is_stmt 0 view .LVU79
+ 339 0098 FFF7FEFF 		bl	rt_thread_self
+ 340              	.LVL31:
+ 341 009c 0146     		mov	r1, r0
+ 342              		.loc 1 326 9 view .LVU80
+ 343 009e 1548     		ldr	r0, .L16+68
+ 344 00a0 FFF7FEFF 		bl	rt_kprintf
+ 345              	.LVL32:
+ 346              	.L13:
+ 327:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 328:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** #ifdef RT_USING_FINSH
+ 329:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         list_thread();
+ 330:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** #endif /* RT_USING_FINSH */
+ 331:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     }
+ 332:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     else
+ 333:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     {
+ 334:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****         rt_kprintf("hard fault on handler\r\n\r\n");
+ 335:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     }
+ 336:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 337:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** #ifdef RT_USING_FINSH
+ 338:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     hard_fault_track();
+ 339:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** #endif /* RT_USING_FINSH */
+ 340:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ARM GAS  /tmp/ccnouRA5.s 			page 14
+
+
+ 341:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     while (1);
+ 347              		.loc 1 341 5 is_stmt 1 discriminator 1 view .LVU81
+ 348              		.loc 1 341 14 discriminator 1 view .LVU82
+ 349              		.loc 1 341 11 discriminator 1 view .LVU83
+ 350 00a4 FEE7     		b	.L13
+ 351              	.L12:
+ 334:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     }
+ 352              		.loc 1 334 9 view .LVU84
+ 353 00a6 1448     		ldr	r0, .L16+72
+ 354 00a8 FFF7FEFF 		bl	rt_kprintf
+ 355              	.LVL33:
+ 356 00ac FAE7     		b	.L13
+ 357              	.LVL34:
+ 358              	.L14:
+ 342:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** }
+ 359              		.loc 1 342 1 is_stmt 0 view .LVU85
+ 360 00ae 10BD     		pop	{r4, pc}
+ 361              	.LVL35:
+ 362              	.L17:
+ 363              		.loc 1 342 1 view .LVU86
+ 364              		.align	2
+ 365              	.L16:
+ 366 00b0 00000000 		.word	.LANCHOR0
+ 367 00b4 00000000 		.word	.LC0
+ 368 00b8 10000000 		.word	.LC1
+ 369 00bc 20000000 		.word	.LC2
+ 370 00c0 30000000 		.word	.LC3
+ 371 00c4 40000000 		.word	.LC4
+ 372 00c8 50000000 		.word	.LC5
+ 373 00cc 60000000 		.word	.LC6
+ 374 00d0 70000000 		.word	.LC7
+ 375 00d4 80000000 		.word	.LC8
+ 376 00d8 90000000 		.word	.LC9
+ 377 00dc A0000000 		.word	.LC10
+ 378 00e0 B0000000 		.word	.LC11
+ 379 00e4 C0000000 		.word	.LC12
+ 380 00e8 D0000000 		.word	.LC13
+ 381 00ec E0000000 		.word	.LC14
+ 382 00f0 F0000000 		.word	.LC15
+ 383 00f4 00010000 		.word	.LC16
+ 384 00f8 20010000 		.word	.LC17
+ 385              		.cfi_endproc
+ 386              	.LFE17:
+ 388              		.section	.rodata.rt_hw_cpu_shutdown.str1.4,"aMS",%progbits,1
+ 389              		.align	2
+ 390              	.LC18:
+ 391 0000 73687574 		.ascii	"shutdown...\012\000"
+ 391      646F776E 
+ 391      2E2E2E0A 
+ 391      00
+ 392              		.section	.text.rt_hw_cpu_shutdown,"ax",%progbits
+ 393              		.align	1
+ 394              		.global	rt_hw_cpu_shutdown
+ 395              		.syntax unified
+ 396              		.thumb
+ 397              		.thumb_func
+ 399              	rt_hw_cpu_shutdown:
+ARM GAS  /tmp/ccnouRA5.s 			page 15
+
+
+ 400              	.LFB18:
+ 343:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 344:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** /**
+ 345:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****  * shutdown CPU
+ 346:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****  */
+ 347:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** void rt_hw_cpu_shutdown(void)
+ 348:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** {
+ 401              		.loc 1 348 1 is_stmt 1 view -0
+ 402              		.cfi_startproc
+ 403              		@ args = 0, pretend = 0, frame = 0
+ 404              		@ frame_needed = 0, uses_anonymous_args = 0
+ 405 0000 08B5     		push	{r3, lr}
+ 406              	.LCFI3:
+ 407              		.cfi_def_cfa_offset 8
+ 408              		.cfi_offset 3, -8
+ 409              		.cfi_offset 14, -4
+ 349:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     rt_kprintf("shutdown...\n");
+ 410              		.loc 1 349 5 view .LVU88
+ 411 0002 0248     		ldr	r0, .L20
+ 412 0004 FFF7FEFF 		bl	rt_kprintf
+ 413              	.LVL36:
+ 350:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 351:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     RT_ASSERT(0);
+ 414              		.loc 1 351 17 view .LVU89
+ 352:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** }
+ 415              		.loc 1 352 1 is_stmt 0 view .LVU90
+ 416 0008 08BD     		pop	{r3, pc}
+ 417              	.L21:
+ 418 000a 00BF     		.align	2
+ 419              	.L20:
+ 420 000c 00000000 		.word	.LC18
+ 421              		.cfi_endproc
+ 422              	.LFE18:
+ 424              		.section	.text.rt_hw_cpu_reset,"ax",%progbits
+ 425              		.align	1
+ 426              		.weak	rt_hw_cpu_reset
+ 427              		.syntax unified
+ 428              		.thumb
+ 429              		.thumb_func
+ 431              	rt_hw_cpu_reset:
+ 432              	.LFB19:
+ 353:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** 
+ 354:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** /**
+ 355:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****  * reset CPU
+ 356:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****  */
+ 357:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** RT_WEAK void rt_hw_cpu_reset(void)
+ 358:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** {
+ 433              		.loc 1 358 1 is_stmt 1 view -0
+ 434              		.cfi_startproc
+ 435              		@ args = 0, pretend = 0, frame = 0
+ 436              		@ frame_needed = 0, uses_anonymous_args = 0
+ 437              		@ link register save eliminated.
+ 359:rt_thread/libcpu/arm/cortex-m3/cpuport.c ****     SCB_AIRCR = SCB_RESET_VALUE;
+ 438              		.loc 1 359 5 view .LVU92
+ 439              		.loc 1 359 15 is_stmt 0 view .LVU93
+ 440 0000 4FF0E023 		mov	r3, #-536813568
+ 441 0004 014A     		ldr	r2, .L23
+ARM GAS  /tmp/ccnouRA5.s 			page 16
+
+
+ 442 0006 C3F80C2D 		str	r2, [r3, #3340]
+ 360:rt_thread/libcpu/arm/cortex-m3/cpuport.c **** }
+ 443              		.loc 1 360 1 view .LVU94
+ 444 000a 7047     		bx	lr
+ 445              	.L24:
+ 446              		.align	2
+ 447              	.L23:
+ 448 000c 0400FA05 		.word	100270084
+ 449              		.cfi_endproc
+ 450              	.LFE19:
+ 452              		.global	rt_thread_switch_interrupt_flag
+ 453              		.global	rt_interrupt_to_thread
+ 454              		.global	rt_interrupt_from_thread
+ 455              		.section	.bss.rt_exception_hook,"aw",%nobits
+ 456              		.align	2
+ 457              		.set	.LANCHOR0,. + 0
+ 460              	rt_exception_hook:
+ 461 0000 00000000 		.space	4
+ 462              		.section	.bss.rt_interrupt_from_thread,"aw",%nobits
+ 463              		.align	2
+ 466              	rt_interrupt_from_thread:
+ 467 0000 00000000 		.space	4
+ 468              		.section	.bss.rt_interrupt_to_thread,"aw",%nobits
+ 469              		.align	2
+ 472              	rt_interrupt_to_thread:
+ 473 0000 00000000 		.space	4
+ 474              		.section	.bss.rt_thread_switch_interrupt_flag,"aw",%nobits
+ 475              		.align	2
+ 478              	rt_thread_switch_interrupt_flag:
+ 479 0000 00000000 		.space	4
+ 480              		.text
+ 481              	.Letext0:
+ 482              		.file 2 "rt_thread/include/rtdef.h"
+ 483              		.file 3 "rt_thread/include/rtthread.h"
+ARM GAS  /tmp/ccnouRA5.s 			page 17
+
+
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 cpuport.c
+     /tmp/ccnouRA5.s:18     .text.rt_hw_stack_init:0000000000000000 $t
+     /tmp/ccnouRA5.s:24     .text.rt_hw_stack_init:0000000000000000 rt_hw_stack_init
+     /tmp/ccnouRA5.s:120    .text.rt_hw_stack_init:0000000000000048 $d
+     /tmp/ccnouRA5.s:125    .text.rt_hw_exception_install:0000000000000000 $t
+     /tmp/ccnouRA5.s:131    .text.rt_hw_exception_install:0000000000000000 rt_hw_exception_install
+     /tmp/ccnouRA5.s:148    .text.rt_hw_exception_install:0000000000000008 $d
+     /tmp/ccnouRA5.s:153    .rodata.rt_hw_hard_fault_exception.str1.4:0000000000000000 $d
+     /tmp/ccnouRA5.s:208    .text.rt_hw_hard_fault_exception:0000000000000000 $t
+     /tmp/ccnouRA5.s:214    .text.rt_hw_hard_fault_exception:0000000000000000 rt_hw_hard_fault_exception
+     /tmp/ccnouRA5.s:366    .text.rt_hw_hard_fault_exception:00000000000000b0 $d
+     /tmp/ccnouRA5.s:389    .rodata.rt_hw_cpu_shutdown.str1.4:0000000000000000 $d
+     /tmp/ccnouRA5.s:393    .text.rt_hw_cpu_shutdown:0000000000000000 $t
+     /tmp/ccnouRA5.s:399    .text.rt_hw_cpu_shutdown:0000000000000000 rt_hw_cpu_shutdown
+     /tmp/ccnouRA5.s:420    .text.rt_hw_cpu_shutdown:000000000000000c $d
+     /tmp/ccnouRA5.s:425    .text.rt_hw_cpu_reset:0000000000000000 $t
+     /tmp/ccnouRA5.s:431    .text.rt_hw_cpu_reset:0000000000000000 rt_hw_cpu_reset
+     /tmp/ccnouRA5.s:448    .text.rt_hw_cpu_reset:000000000000000c $d
+     /tmp/ccnouRA5.s:478    .bss.rt_thread_switch_interrupt_flag:0000000000000000 rt_thread_switch_interrupt_flag
+     /tmp/ccnouRA5.s:472    .bss.rt_interrupt_to_thread:0000000000000000 rt_interrupt_to_thread
+     /tmp/ccnouRA5.s:466    .bss.rt_interrupt_from_thread:0000000000000000 rt_interrupt_from_thread
+     /tmp/ccnouRA5.s:456    .bss.rt_exception_hook:0000000000000000 $d
+     /tmp/ccnouRA5.s:460    .bss.rt_exception_hook:0000000000000000 rt_exception_hook
+     /tmp/ccnouRA5.s:463    .bss.rt_interrupt_from_thread:0000000000000000 $d
+     /tmp/ccnouRA5.s:469    .bss.rt_interrupt_to_thread:0000000000000000 $d
+     /tmp/ccnouRA5.s:475    .bss.rt_thread_switch_interrupt_flag:0000000000000000 $d
+
+UNDEFINED SYMBOLS
+rt_kprintf
+rt_thread_self
